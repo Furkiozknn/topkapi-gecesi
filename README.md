@@ -18,6 +18,10 @@
 
 <p align="center"><b>Play online: <a href="https://furkiozknn.github.io/topkapi-gecesi/">https://furkiozknn.github.io/topkapi-gecesi/</a></b> (desktop and phone, no install)</p>
 
+<!-- portals:start -->
+<p align="center">Also on: <a href="https://furkiozknn.itch.io/topkapi-gecesi">itch.io</a></p>
+<!-- portals:end -->
+
 ## Highlights
 
 - **Real stealth rules.** Halberdiers, harem guards, the head cook and his cat walk patrol routes, stop and look
@@ -181,3 +185,5 @@ oynanır. Claude Opus 5.5 tarafından Claude Code ile tek bir prompt'tan yapıld
 ## License
 
 MIT, see [LICENSE](LICENSE).
+
+Like the game? You can support new rounds on [Buy Me a Coffee](https://buymeacoffee.com/furkiozkann). The game stays free.
