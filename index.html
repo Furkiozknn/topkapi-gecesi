@@ -2135,48 +2135,77 @@ function bakeGlow(S) {
 // Characters, vision cones, items
 // ---------------------------------------------------------------------------
 const SKIN = 0xd9a77e;
+// figures face +x; aux tags limbs for the walk cycle in the vertex shader: +-1 legs (hip pivot), +-2 arms (shoulder pivot)
+const lathe = (pts, seg = 12) => new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), seg);
 function figureGeo(type) {
   const B = new GB(); seedV = 4242 + type.length * 31;
   if (type === 'cat') {
-    B.geo(SPH(0.2, 8, 6), M(0, 0.28, 0, 0, 1.7, 0.85, 0.9), 0xd9822b, 0.05).geo(SPH(0.13, 8, 6), M(0.36, 0.42, 0), 0xe0903a);
-    for (const s of [-1, 1]) { B.geo(CONE(0.05, 0.11, 4), M(0.36, 0.56, s * 0.07), 0xc06a20); B.geo(SPH(0.025, 4, 3), M(0.47, 0.45, s * 0.05), 0xd8f060); }
-    for (const [lx, lz] of [[0.2, 0.09], [0.2, -0.09], [-0.2, 0.09], [-0.2, -0.09]]) B.geo(CYL(0.035, 0.035, 0.22, 5), M(lx, 0.11, lz), 0xc87224);
-    B.geo(CYL(0.03, 0.025, 0.45, 5), M(-0.42, 0.45, 0, 0, 1, 1, 1, 0, 0.6), 0xd9822b);
+    B.geo(SPH(0.2, 10, 8), M(0, 0.28, 0, 0, 1.7, 0.85, 0.9), 0xd9822b, 0.05).geo(SPH(0.14, 10, 8), M(0.36, 0.43, 0), 0xe0903a);
+    for (const s of [-1, 1]) { B.geo(CONE(0.05, 0.12, 4), M(0.35, 0.58, s * 0.07), 0xc06a20); B.geo(SPH(0.028, 5, 4), M(0.48, 0.46, s * 0.055), 0xd8f060); }
+    B.geo(SPH(0.03, 4, 3), M(0.5, 0.41, 0), 0x3a2018);
+    for (const [lx, lz] of [[0.2, 0.09], [0.2, -0.09], [-0.2, 0.09], [-0.2, -0.09]]) B.geo(CYL(0.035, 0.03, 0.22, 6), M(lx, 0.11, lz), 0xc87224);
+    for (let k = 0; k < 4; k++) B.geo(BOX, M(-0.05 + k * 0.1, 0.42, 0, 0, 0.03, 0.04, 0.3), 0xb05a18);
+    B.geo(CYL(0.03, 0.022, 0.5, 6), M(-0.44, 0.48, 0, 0, 1, 1, 1, 0, 0.75), 0xd9822b);
     return B.build();
   }
   const S = {
-    halb: { robe: 0xa3262a, robe2: 0x7e1a20, sash: 0xC9A227, legs: 0x2a2030, h: 1 },
-    eunuch: { robe: 0x1f5a4a, robe2: 0x174438, sash: 0xd8782a, legs: 0x1f2a2a, h: 1.02 },
-    cook: { robe: 0xe8e4da, robe2: 0xcfc8b8, sash: 0x8a3a2a, legs: 0x5a4a3a, h: 0.97 },
-    page: { robe: 0x4a8ad0, robe2: 0x356aa8, sash: 0xC9A227, legs: 0xe8dcc0, h: 0.88 },
+    halb: { robe: 0xa3262a, robe2: 0x7e1a20, sash: 0xC9A227, legs: 0x2a2030, trim: 0xe8c75c, h: 1 },
+    eunuch: { robe: 0x1f5a4a, robe2: 0x174438, sash: 0xd8782a, legs: 0x1f2a2a, trim: 0xd8b860, h: 1.02 },
+    cook: { robe: 0xe8e4da, robe2: 0xd2cabb, sash: 0x8a3a2a, legs: 0x5a4a3a, trim: 0x8a3a2a, h: 0.97 },
+    page: { robe: 0x2f6fc4, robe2: 0x24589e, sash: 0xC9A227, legs: 0xe8dcc0, trim: 0xf2d27a, h: 0.88 },
   }[type];
-  for (const s of [-1, 1]) B.box(0, 0, s * 0.11, 0.16, 0.7, 0.15, S.legs).box(0.04, 0, s * 0.11, 0.24, 0.1, 0.16, type === 'page' ? 0xb02030 : 0x3a2618);
   const long = type === 'eunuch' || type === 'cook';
-  B.geo(CYL(0.25, long ? 0.44 : 0.38, long ? 1.2 : 0.75, 10), M(0, long ? 0.65 : 0.82, 0), S.robe, 0.04);
-  B.geo(CYL(0.21, 0.25, 0.5, 10), M(0, 1.45, 0), S.robe2, 0.04).geo(CYL(0.265, 0.265, 0.12, 10), M(0, 1.22, 0), S.sash);
-  if (type === 'cook') B.geo(BOX, M(0.2, 0.9, 0, 0, 0.06, 0.8, 0.42), 0xffffff);
-  for (const s of [-1, 1]) B.geo(BOX, M(0.02, 1.38, s * 0.3, 0, 0.14, 0.52, 0.13, s * 0.12), S.robe2).geo(SPH(0.07, 6, 4), M(0.04, 1.1, s * 0.33), SKIN);
-  B.geo(SPH(0.15, 10, 8), M(0, 1.84, 0), SKIN).geo(SPH(0.03, 4, 3), M(0.14, 1.86, 0.06), 0x222).geo(SPH(0.03, 4, 3), M(0.14, 1.86, -0.06), 0x222);
-  if (type === 'halb') {
-    B.geo(CYL(0.15, 0.13, 0.52, 10), M(-0.02, 2.17, 0), 0xf0ebe0).geo(CYL(0.16, 0.16, 0.08, 10), M(0, 1.95, 0), 0xC9A227).geo(CONE(0.05, 0.3, 5), M(0.06, 2.55, 0), 0xC9A227);
-    B.geo(CYL(0.025, 0.025, 2.5, 5), M(0.1, 1.25, 0.36), 0x5a3a20).geo(BOX, M(0.18, 2.35, 0.36, 0, 0.3, 0.32, 0.04), 0xc8ccd4).geo(CONE(0.04, 0.3, 4), M(0.1, 2.62, 0.36), 0xc8ccd4);
-    B.geo(SPH(0.07, 6, 4), M(-0.18, 2.48, 0, 0, 1, 1.6, 1), 0xe8e0d0);
-  } else if (type === 'eunuch') {
-    B.geo(SPH(0.24, 10, 7), M(0, 2.04, 0, 0, 1, 0.72, 1), 0xf4f0e8).geo(CYL(0.08, 0.1, 0.18, 8), M(0, 2.24, 0), 0xa3262a).geo(SPH(0.04, 5, 4), M(0.2, 2.06, 0), 0xC9A227);
-    B.geo(CYL(0.02, 0.02, 1.7, 5), M(0.12, 0.85, 0.34), 0x3a2a1a).geo(SPH(0.06, 6, 4), M(0.12, 1.72, 0.34), 0xC9A227);
-  } else if (type === 'cook') {
-    B.geo(CYL(0.13, 0.16, 0.5, 10), M(0, 2.15, 0), 0xffffff).geo(SPH(0.14, 8, 5, 0, Math.PI / 2), M(0, 2.4, 0), 0xffffff);
-    B.geo(CYL(0.02, 0.02, 0.6, 5), M(0.12, 1.1, 0.34, 0, 1, 1, 1, 0.3), 0x8a6a4a).geo(SPH(0.08, 6, 4, 0, Math.PI / 2), M(0.12, 0.8, 0.42, 0, 1, 1, 1, Math.PI), 0xb8733a);
-  } else {
-    B.geo(CYL(0.11, 0.13, 0.18, 10), M(0, 2.0, 0), 0xb02030).geo(CYL(0.02, 0.02, 0.12, 4), M(0, 2.13, 0), 0x222);
+  // legs and pointed slippers
+  for (const s of [-1, 1]) {
+    B.mode(s).geo(CYL(0.075, 0.065, 0.7, 8), M(0, 0.37, s * 0.11), S.legs).geo(CONE(0.07, 0.28, 6), M(0.12, 0.06, s * 0.11, 0, 1, 1, 0.75, 0, -Math.PI / 2), type === 'page' ? 0xb02030 : 0x3a2618);
   }
-  const g = B.build(); if (S.h !== 1) g.scale(S.h, S.h, S.h); return g;
+  B.mode(0);
+  // kaftan: a flared lathe skirt, torso, sash and a gold front trim
+  B.geo(lathe(long ? [[0.46, 0.08], [0.42, 0.35], [0.33, 0.75], [0.26, 1.15], [0.24, 1.2]] : [[0.4, 0.5], [0.36, 0.7], [0.29, 0.95], [0.25, 1.2]]), null, S.robe, 0.03);
+  B.geo(CYL(0.2, 0.25, 0.5, 12), M(0, 1.43, 0), S.robe2, 0.03).geo(CYL(0.262, 0.262, 0.13, 12), M(0, 1.22, 0), S.sash);
+  B.geo(BOX, M(long ? 0.3 : 0.31, long ? 0.66 : 0.86, 0, 0, 0.03, long ? 1.1 : 0.7, 0.06, 0, long ? -0.18 : -0.15), S.trim).geo(BOX, M(0.215, 1.43, 0, 0, 0.03, 0.48, 0.05, 0, -0.09), S.trim);
+  if (type === 'cook') B.geo(BOX, M(0.28, 0.85, 0, 0, 0.05, 0.85, 0.44, 0, -0.12), 0xffffff);
+  B.geo(CYL(0.24, 0.2, 0.12, 12), M(0, 1.7, 0), S.robe2);
+  // arms with hands
+  for (const s of [-1, 1]) B.mode(2 * s).geo(CYL(0.075, 0.06, 0.55, 8), M(0.02, 1.36, s * 0.29, 0, 1, 1, 1, s * 0.1), S.robe2).geo(SPH(0.065, 8, 6), M(0.04, 1.06, s * 0.32), SKIN);
+  B.mode(0);
+  // head, eyes, moustache for the grown-ups
+  B.geo(SPH(0.15, 14, 10), M(0, 1.86, 0), SKIN).geo(SPH(0.028, 5, 4), M(0.135, 1.88, 0.06), 0x1a1410).geo(SPH(0.028, 5, 4), M(0.135, 1.88, -0.06), 0x1a1410);
+  if (type !== 'page') B.geo(BOX, M(0.145, 1.8, 0, 0, 0.03, 0.03, 0.14), 0x2a1a10);
+  if (type === 'halb') { // tall white cap with false sidelocks and a halberd
+    B.geo(lathe([[0.155, 0], [0.16, 0.2], [0.13, 0.48], [0.06, 0.6], [0, 0.62]], 10), M(-0.02, 1.94, 0), 0xf0ebe0).geo(CYL(0.165, 0.165, 0.08, 12), M(0, 1.97, 0), 0xC9A227);
+    for (const s of [-1, 1]) B.geo(CYL(0.025, 0.02, 0.4, 5), M(-0.04, 1.8, s * 0.15), 0x2a1a10);
+    B.geo(CYL(0.022, 0.022, 2.5, 6), M(0.12, 1.25, 0.4), 0x5a3a20).geo(BOX, M(0.22, 2.35, 0.4, 0, 0.32, 0.3, 0.03), 0xc8ccd4).geo(CONE(0.04, 0.32, 4), M(0.12, 2.64, 0.4), 0xc8ccd4).geo(CYL(0.04, 0.04, 0.06, 6), M(0.12, 2.2, 0.4), PAL.gold);
+  } else if (type === 'eunuch') { // great round turban and a staff
+    B.geo(SPH(0.25, 14, 9), M(0, 2.05, 0, 0, 1, 0.72, 1), 0xf4f0e8).geo(new THREE.TorusGeometry(0.2, 0.05, 6, 14), M(0, 1.98, 0, 0, 1, 1, 1, Math.PI / 2), 0xe2dcd0);
+    B.geo(CYL(0.08, 0.1, 0.18, 8), M(0, 2.25, 0), 0xa3262a).geo(SPH(0.045, 6, 4), M(0.22, 2.07, 0), 0xC9A227);
+    B.geo(CYL(0.02, 0.02, 1.8, 5), M(0.12, 0.9, 0.38), 0x3a2a1a).geo(SPH(0.065, 6, 4), M(0.12, 1.82, 0.38), 0xC9A227);
+  } else if (type === 'cook') { // tall white hat and a ladle
+    B.geo(lathe([[0.13, 0], [0.15, 0.3], [0.18, 0.48], [0.12, 0.56], [0, 0.58]], 10), M(0, 1.93, 0), 0xffffff);
+    B.geo(CYL(0.02, 0.02, 0.6, 5), M(0.14, 1.1, 0.36, 0, 1, 1, 1, 0.3), 0x8a6a4a).geo(SPH(0.08, 6, 4, 0, Math.PI / 2), M(0.14, 0.8, 0.44, 0, 1, 1, 1, Math.PI), 0xb8733a);
+  } else { // the page: red fez with a gold tassel
+    B.geo(CYL(0.11, 0.135, 0.2, 12), M(0, 2.02, 0), 0xb02030).geo(CYL(0.012, 0.012, 0.14, 4), M(-0.06, 2.06, 0.08, 0, 1, 1, 1, 0.5), 0xC9A227).geo(SPH(0.03, 5, 4), M(-0.08, 1.98, 0.12), 0xC9A227);
+  }
+  const g = B.build(); g.userData.h = S.h; if (S.h !== 1) g.scale(S.h, S.h, S.h); return g;
 }
 const FIG = {};
 function figMesh(type) {
   if (!FIG[type]) FIG[type] = figureGeo(type);
+  const U = { uPhase: { value: 0 }, uAmp: { value: 0 }, uH: { value: FIG[type].userData.h || 1 }, uRim: { value: new THREE.Color(type === 'page' ? 0x8a7a3a : 0x34477a) } };
   const m = new THREE.Mesh(FIG[type], new THREE.MeshLambertMaterial({ vertexColors: true, emissive: 0x000000 }));
-  m.castShadow = true; return m;
+  m.material.customProgramCacheKey = () => 'fig';
+  m.material.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, U);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aux;\nuniform float uPhase;\nuniform float uAmp;\nuniform float uH;')
+      .replace('#include <begin_vertex>', `#include <begin_vertex>
+        if (abs(aux) > 0.5) {
+          bool arm = abs(aux) > 1.5; float py = (arm ? 1.6 : 0.74) * uH, a = sin(uPhase) * uAmp * sign(aux) * (arm ? -0.75 : 1.0), s = sin(a), c = cos(a);
+          vec2 q = vec2(transformed.x, transformed.y - py); transformed.x = q.x * c - q.y * s; transformed.y = q.x * s + q.y * c + py;
+        }`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uRim;')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += uRim * pow(1.0 - max(dot(normal, normalize(vViewPosition)), 0.0), 2.4);');
+  };
+  m.userData.U = U; m.castShadow = true; return m;
 }
 function iconTex(ch, bg, fg) {
   const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d');
@@ -2861,6 +2890,8 @@ function render(dt) {
       pm.rotation.set(0, -P.face, 0); pm.scale.set(1, cr ? 0.72 : 1, 1);
       pm.rotation.z = moving ? (P.gait === 'run' ? -0.18 : -0.06) : 0;
       const w = lanternWarm(S, P.x, P.z); pm.material.emissive.setRGB(w * 0.26, w * 0.15, w * 0.06);
+      const U = pm.userData.U, amp = moving ? (P.gait === 'run' ? 0.7 : cr ? 0.3 : 0.45) : 0;
+      U.uAmp.value += (amp - U.uAmp.value) * Math.min(1, dt * 10); if (moving) U.uPhase.value += dt * (P.gait === 'run' ? 13 : cr ? 6.5 : 9);
     }
     // guards
     S.guards.forEach((g, k) => {
@@ -2870,6 +2901,7 @@ function render(dt) {
       V.mesh.position.set(g.x, g.moving ? Math.abs(Math.sin(V.bob)) * 0.05 : 0, g.z); V.mesh.rotation.set(0, -g.h, g.moving ? -0.05 : 0);
       const w = lanternWarm(S, g.x, g.z), al = g.state === 'alert' ? 0.25 + 0.15 * Math.sin(T * 12) : 0;
       V.mesh.material.emissive.setRGB(w * 0.26 + al, w * 0.15, w * 0.06);
+      const U = V.mesh.userData.U; U.uPhase.value = V.bob; U.uAmp.value += ((g.moving ? (g.state === 'alert' ? 0.62 : 0.38) : 0) - U.uAmp.value) * Math.min(1, dt * 8);
       if (V.cone.visible) updateCone(V, g, S);
       const st = g.state === 'alert' ? 'alert' : (g.state === 'sus' || g.state === 'search') ? (g.type === 'cat' ? 'cat' : 'sus') : '';
       if (st !== V.state) { V.state = st; if (st) V.icon.material.map = ICONS[st]; V.icon.material.needsUpdate = true; }
