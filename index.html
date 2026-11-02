@@ -96,6 +96,19 @@ b,.num{font-variant-numeric:tabular-nums}
 .dashbar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold3))}
 @media (max-width:760px){.vis{width:200px;padding:8px 10px;bottom:calc(150px + var(--sa-b))}.eye{width:70px;height:38px;flex-basis:70px}.tools{gap:8px}.vtext b{font-size:15px}}
 @media (max-height:520px) and (pointer:coarse){.vis{bottom:calc(8px + var(--sa-b));left:calc(170px + var(--sa-l));width:196px;padding:8px 10px}.eye{width:70px;height:38px;flex-basis:70px}.vtext b{font-size:15px}}
+/* phone landscape: compact objectives (below the measured top bar, --tbh set from JS) and a compact meter that stays
+   between the stick (left, ~150px) and the button grid (right, ~218px) */
+@media (max-height:500px) and (orientation:landscape){
+  .objs{top:calc(var(--tbh, calc(70px + var(--sa-t))) + 6px);width:min(210px,34vw);max-height:calc(100vh - var(--tbh, 70px) - 170px - var(--sa-b));overflow:hidden;font-size:12px;padding:5px 8px}
+  .objs .orow{padding:2px}
+  .vis{left:calc(158px + var(--sa-l));bottom:calc(6px + var(--sa-b));width:auto;max-width:calc(100vw - 384px - var(--sa-l) - var(--sa-r));padding:5px 8px}
+  .vis h4{display:none}
+  .eye{width:52px;height:28px;flex-basis:52px}
+  .eyerow{gap:6px}.vtext b{font-size:13.5px}.vtext span{font-size:11.5px}
+  .tools{gap:8px;margin-top:4px;padding-top:4px;font-size:12px}
+}
+/* phone portrait: the top bar wraps to two (sometimes three) rows, so drop the objectives below its measured bottom */
+@media (max-width:760px) and (orientation:portrait){.objs{top:calc(var(--tbh, calc(116px + var(--sa-t))) + 8px)}}
 
 /* interaction prompt, note card, toasts */
 .prompt{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + var(--sa-b));padding:9px 18px;font-size:15px;font-weight:600;z-index:19;display:flex;align-items:center;gap:10px;pointer-events:none;border-radius:24px}
@@ -1843,13 +1856,38 @@ const ARCH = {
 };
 function clearLevel() {
   for (const m of WORLD.meshes) { scene.remove(m); m.geometry && m.geometry.dispose(); if (m.material && m.material !== MAT.world && m.material !== MAT.floor && !m.material.shared) m.material.dispose(); }
-  WORLD.meshes = []; WORLD.baked = [];
+  WORLD.meshes = []; WORLD.baked = []; WORLD.cyp = [];
 }
 function add(m, list = WORLD.meshes) { scene.add(m); list.push(m); return m; }
 function cypress(B, x, z, hgt, ry, scl = 1) {
   B.mode(SM.wood).geo(CYL(0.1 * scl, 0.15 * scl, 0.7, 6), M(x, 0.35, z), PAL.trunk);
   B.mode(SM.leaf).geo(ARCH.cypress, M(x, 0.3, z, ry, scl, hgt, scl), pc(PAL.cypress), 0.12).geo(ARCH.cypress, M(x + 0.12 * scl, 0.9, z - 0.08 * scl, ry + 1, 0.7 * scl, hgt * 0.82, 0.7 * scl), pc(PAL.cypress), 0.12);
   B.mode(0);
+}
+// fade-able cypress: its own small mesh + material (same world shader) so fadeCypress() can make it see-through.
+// Same cypress() call and srand order as before, so the layout is unchanged.
+function cypMesh(x, z, hgt, ry, scl, inside) {
+  const B = new GB(); cypress(B, x, z, hgt, ry, scl);
+  const m = new THREE.Mesh(B.build(), worldMat({ transparent: true }, inside));
+  m.castShadow = inside; m.receiveShadow = true; add(m); if (inside) WORLD.baked.push(m.geometry);
+  WORLD.cyp.push({ m, x, z, top: 0.3 + hgt, r: 0.8 * scl + 0.5 });
+}
+// trees between the camera and the player lerp to ~0.25 opacity: a 2D segment test plus the view ray's height at the tree
+function fadeCypress(dt) {
+  if (!WORLD.cyp) return;
+  const on = CUT.on.value > 0.5, cp = CUT.cam.value, pp = CUT.player.value, k = 1 - Math.exp(-dt * 8);
+  const ax = pp.x - cp.x, az = pp.z - cp.z, aa = ax * ax + az * az || 1;
+  for (const c of WORLD.cyp) {
+    let want = 1;
+    if (on) {
+      const t = ((c.x - cp.x) * ax + (c.z - cp.z) * az) / aa;
+      if (t > 0 && t < 1) {
+        const dx = cp.x + ax * t - c.x, dz = cp.z + az * t - c.z;
+        if (dx * dx + dz * dz < c.r * c.r && cp.y + (pp.y - cp.y) * t < c.top) want = 0.25;
+      }
+    }
+    const mt = c.m.material; mt.opacity += (want - mt.opacity) * k; mt.depthWrite = mt.opacity > 0.98;
+  }
 }
 function buildLevel(L) {
   clearLevel(); seedV = 1000 + L.idx * 77;
@@ -1994,7 +2032,7 @@ function buildLevel(L) {
     const ry = srand() * TAU;
     P.mode(0);
     switch (ch) {
-      case 'T': cypress(P, x, z, 5.2 + srand() * 1.6, ry); break;
+      case 'T': cypMesh(x, z, 5.2 + srand() * 1.6, ry, 1, true); break; // own mesh so it can fade (was merged into P)
       case 'o': { // marble column with a muqarnas capital; pointed arches to the next column and a dome over each bay
         P.mode(SM.marble).box(x, 0, z, 0.6, 0.3, 0.6, 0xdcd6c8).geo(CYL(0.17, 0.2, 1.86, 12), M(x, 1.23, z), PAL.white, 0.03);
         P.mode(0).geo(CYL(0.21, 0.21, 0.07, 12), M(x, 0.33, z), PAL.gold).geo(CYL(0.19, 0.19, 0.05, 12), M(x, 2.13, z), PAL.gold);
@@ -2152,7 +2190,7 @@ function buildOutside(L) {
     if (x > -10 && x < W + 2 && z > -2 && z < H + 10) continue;
     cypress(B, x, z, 5 + srand() * 3, srand() * TAU, 1.2);
   }
-  for (let x = -2; x < W + 2; x += 4) { cypress(B, x, H + 2.6, 5.5 + srand(), srand() * TAU, 1); }
+  for (let x = -2; x < W + 2; x += 4) { cypMesh(x, H + 2.6, 5.5 + srand(), srand() * TAU, 1, false); } // south avenue sits in the foreground: fade-able
   for (let k = 0; k < 160; k++) {
     const x = lerp(x0 + 2, x1 - 2, srand()), z = lerp(z0 + 2, z1 - 2, srand()); if (x > -1.5 && x < W + 1.5 && z > -1.5 && z < H + 1.5) continue;
     if (srand() < 0.6) B.mode(SM.leaf).geo(SPH(0.5 + srand() * 0.5, 8, 5), M(x, 0.3, z, srand() * 3, 1, 0.75, 1), pc([0x1c3a28, 0x24452f, 0x183322]), 0.1);
@@ -2468,6 +2506,7 @@ function updateCamera(dt) {
     camera.lookAt(W / 2 + Math.sin(a) * 8, 6.5, H * 0.1);
     CUT.on.value = 0;
   }
+  fadeCypress(dt); // foreground cypress fade (only while CUT is on, i.e. following the player)
 }
 function setNDC(e) { NDC.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); }
 let drag = null; const pointers = new Map();
@@ -2526,6 +2565,11 @@ function showTouch() { if (INP.touch) return; INP.touch = true; if (G.screen ===
   run.addEventListener('pointerdown', e => { e.preventDefault(); INP.run = true; run.classList.add('on'); });
   for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) run.addEventListener(ev, () => { INP.run = false; run.classList.remove('on'); });
 })();
+// HUD layout: publish the top bar's bottom edge as --tbh so the phone CSS can place the objectives panel below it
+if (window.ResizeObserver) {
+  const tb = document.querySelector('.topbar');
+  new ResizeObserver(() => { const b = tb.getBoundingClientRect().bottom; if (b > 0) document.documentElement.style.setProperty('--tbh', Math.ceil(b) + 'px'); }).observe(tb);
+}
 
 // ---------------------------------------------------------------------------
 // Audio: everything synthesised with Web Audio
