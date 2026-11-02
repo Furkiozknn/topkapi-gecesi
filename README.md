@@ -37,7 +37,7 @@
   lost tulip bulb, a secret letter or "be a ghost") and three stars: unseen, swift and the optional objective, 27 in all.
 - **A bot that really plays.** `?auto` plays all nine missions with the same inputs a player has: it predicts the
   patrols and plans a timed route with a space-time A* search that keeps out of every cone and noise ring.
-  Measured: **9/9 missions, 27/27 stars, 0 alarms**, 60 fps, 26-33 draw calls.
+  Measured: **9/9 missions, 27/27 stars, 0 alarms**, 60 fps, 26-33 draw calls in play.
 - **Night music that reacts.** A synthesised ney line over a kanun ostinato in makam Hicaz, crickets, a fountain and
   footsteps on stone, gravel, marble and carpet. When a guard grows suspicious the kanun speeds up and a darbuka joins.
 - **One file, made in code.** One `index.html` with Three.js r170 from a CDN; every mesh, texture and sound is
@@ -125,6 +125,31 @@ assets).
   </tr>
 </table>
 
+## Redesign (2026-11)
+
+<p align="center"><img src="docs/redesign-before-after.png" width="100%" alt="Title screen before and after the redesign: a blurred palace behind a centred card, then a moonlit Bosphorus and palace beside a dark lacquer card with gold filigree"></p>
+<p align="center"><img src="docs/redesign-before-after-gameplay.png" width="100%" alt="The Consorts' Courtyard before and after the redesign, same camera"></p>
+
+**Art direction: moonlit noir stealth.** Night blue #0B1D3A, moonlight #9DB4FF, lantern #FFB547, gold #C9A227 and
+Iznik white and blue; cold moonlight against warm lantern pools, with the UI in dark lacquer and gold filigree.
+
+- **World:** a night sky with a low moon and clouds over a shader Bosphorus with a moon path; world-space stone,
+  Iznik tile, marble, carpet, lead and ashlar textures; blind arcades with tile panels, carved doors, eaves,
+  colonnades with bay domes, lantern light shafts and warm pools, contact shadows and lathe cypresses.
+- **Characters:** guards, the page and the cat rebuilt from lathe kaftans with gold trim, caps, turban and fez, with a
+  walk cycle in the vertex shader and a moonlit rim light so silhouettes read in the dark.
+- **FX:** mist outside the walls, pulsing alert icons, gravel and running dust, moths at the lanterns, star and window
+  flicker.
+- **UI:** lacquer cartouches for the top bar, SVG filigree corners, gold-leaf buttons, an almond eye for the visibility
+  meter whose lids open with exposure, a gold-ink palace map, and lacquer touch controls. The title card sits to the
+  left so the palace shows. Phone portrait and landscape were re-laid out so the prompt, the eye meter and the touch
+  controls no longer overlap.
+- **Kept:** the rules, guards, missions, stars, bot, saves, flags, audio and both languages are unchanged.
+
+Measured in headless Chrome on an Intel UHD 620 at 1280x720, before → after: 60 → 60 fps; draw calls 27-31 → 29-33 in
+play and 39 → 47 on the title; triangles 27k-39k → 78k-84k. The bot still finishes **9/9 missions with 27/27 stars**
+and 0 JS errors, with and without ?noassets.
+
 ## Running locally
 
 Serve the folder over HTTP, for example:
@@ -152,7 +177,7 @@ Everything is generated in code, so there are no asset files and no credits to l
   attribute and rebaked only when a lantern is snuffed or relit. One moon light with a 1024 shadow map covers only the
   palace grounds.
 - **Performance:** measured in headless Chrome on an Intel UHD 620 (i5-10210U) at 1280x720: 60 fps, 26-33 draw calls
-  and 16k-28k triangles during play.
+  and 68k-84k triangles during play (after the 2026-11 redesign).
 
 </details>
 
