@@ -8,7 +8,7 @@
 <style>
 /* Dark lacquer and gold filigree: night blue #0B1D3A, moonlight #9DB4FF, lantern #FFB547, gold #C9A227 */
 :root{
-  --bg:#07122a; --ink:#f4ecda; --ink2:#bcc6de; --gold:#C9A227; --gold2:#e8c75c; --gold3:#f6e2a0; --blue:#9DB4FF; --red:#ec6a5e; --green:#8fd07a; --amber:#FFB547;
+  --bg:#07122a; --ink:#f4ecda; --ink2:#bcc6de; --gold:#C9A227; --gold2:#e8c75c; --gold3:#f6e2a0; --blue:#9DB4FF; --red:#ff8a80; --green:#8fd07a; --amber:#FFB547;
   --lac:#0b1d3a; --lac2:#081530; --line:rgba(201,162,39,.5); --line2:rgba(201,162,39,.22);
   --lacquer:radial-gradient(130% 90% at 20% -10%,rgba(157,180,255,.13),rgba(157,180,255,0) 55%),linear-gradient(180deg,#112650 0%,#0b1d3a 48%,#081530 100%);
   --sa-t:env(safe-area-inset-top,0px); --sa-b:env(safe-area-inset-bottom,0px); --sa-l:env(safe-area-inset-left,0px); --sa-r:env(safe-area-inset-right,0px);
@@ -21,7 +21,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 .vignette{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(120% 95% at 50% 45%,rgba(2,6,18,0) 55%,rgba(2,6,18,.55) 100%)}
 [hidden]{display:none!important}
 button{font:inherit;color:inherit;cursor:pointer}
-:focus-visible{outline:3px solid var(--gold3);outline-offset:3px}
+:focus-visible{outline:3px solid #fff;outline-offset:3px}
 .serif{font-family:Georgia,"Times New Roman",serif}
 svg{display:block}
 b,.num{font-variant-numeric:tabular-nums}
@@ -244,6 +244,12 @@ input[type=range]{flex:1;accent-color:var(--gold);height:44px;margin:0}
 .redflash.on{box-shadow:inset 0 0 140px 40px rgba(226,60,50,.45)}
 .redflash.sus{box-shadow:inset 0 0 120px 26px rgba(255,181,71,.28)}
 
+/* a11y: disable transitions & animations under reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .fade, .redflash { transition: none !important; }
+  .note { animation: none !important; }
+}
+
 #dbg{position:fixed;left:8px;top:calc(70px + var(--sa-t));font:12px/1.4 ui-monospace,Consolas,monospace;color:#9f9;background:rgba(0,0,0,.65);padding:6px 8px;white-space:pre;pointer-events:none;z-index:60;border-radius:6px;max-width:92vw;overflow:hidden}
 #dbg .err{color:#f66}
 </style>
@@ -407,9 +413,9 @@ input[type=range]{flex:1;accent-color:var(--gold);height:44px;margin:0}
 <div class="overlay" id="settings" hidden>
   <div class="panel lac col">
     <h2 data-t="settings"></h2>
-    <label class="sl"><span data-t="master"></span><input type="range" id="r-master" min="0" max="1" step="0.05"></label>
-    <label class="sl"><span data-t="music"></span><input type="range" id="r-music" min="0" max="1" step="0.05"></label>
-    <label class="sl"><span data-t="effects"></span><input type="range" id="r-sfx" min="0" max="1" step="0.05"></label>
+    <label class="sl"><span data-t="master"></span><input type="range" id="r-master" min="0" max="1" step="0.05" data-tt="master"></label>
+    <label class="sl"><span data-t="music"></span><input type="range" id="r-music" min="0" max="1" step="0.05" data-tt="music"></label>
+    <label class="sl"><span data-t="effects"></span><input type="range" id="r-sfx" min="0" max="1" step="0.05" data-tt="effects"></label>
     <div class="row"><span class="lbl" data-t="language"></span><div class="seg" id="seg-lang2"><button data-l="tr">TR</button><button data-l="en">EN</button></div></div>
     <div class="row"><span class="lbl" data-t="quality"></span><div class="seg" id="seg-q"><button data-q="low" data-t="low"></button><button data-q="high" data-t="high"></button></div></div>
     <div class="row"><span class="lbl" data-t="fullscreen"></span><button class="btn" id="b-full"><svg><use href="#i-fs"/></svg><span data-t="toggle"></span></button></div>
