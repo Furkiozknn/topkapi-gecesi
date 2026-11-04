@@ -1,57 +1,48 @@
 <p align="center">
-  <a href="https://furkiozknn.github.io/topkapi-gecesi/"><img src="docs/banner.svg" width="100%" alt="Topkapı Gecesi: a night stealth game in an Ottoman palace. A guard's vision cone sweeps a moonlit courtyard while a page hides in the shadows with the diamond. Click to play in your browser."></a>
+  <a href="https://furkiozknn.github.io/topkapi-gecesi/">
+    <img src="docs/card.jpg" width="100%" alt="Topkapı Gecesi: a 3D night stealth game in an Ottoman palace. A page sneaks through the moonlit courtyard past the guards' vision cones. Click to play in your browser.">
+  </a>
 </p>
 
 <p align="center">
-  <a href="https://furkiozknn.github.io/topkapi-gecesi/"><img src="https://img.shields.io/badge/%E2%96%B6_Play_now-in_your_browser-C9A227?style=for-the-badge&labelColor=0B1226" alt="Play now in your browser"></a>
+  <a href="https://furkiozknn.github.io/topkapi-gecesi/"><img src="https://img.shields.io/badge/%E2%96%B6_Play_free-in_your_browser-C9A227?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0B1226" height="40" alt="Play free in your browser"></a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Three.js-r170-E8C75C?style=for-the-badge&logo=threedotjs&logoColor=white&labelColor=0B1226" alt="Three.js r170">
   <img src="https://img.shields.io/badge/built_by-Claude_Opus_5.5-7EA6EA?style=for-the-badge&logo=claude&logoColor=white&labelColor=0B1226" alt="Built by Claude Opus 5.5">
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MIT-7CC46A?style=for-the-badge&labelColor=0B1226" alt="MIT licence"></a>
   <img src="https://img.shields.io/badge/no_install-desktop_%C2%B7_phone-F4ECDA?style=for-the-badge&labelColor=0B1226" alt="No install, desktop and phone">
 </p>
 
-<p align="center"><b>A 3D stealth game at night in an Ottoman palace: the Spoon-maker's Diamond has been swapped for a fake, and you, a young palace page, sneak through the courts, the Harem and the Treasury to put the real one back before dawn without being caught.</b></p>
-
-<p align="center">
-  <img src="docs/gameplay.gif" width="640" alt="Topkapı Gecesi gameplay: the bot crouches through the shadows of the Middle Gate past the guards' vision cones and finds the lost tulip bulb">
-</p>
-
-<p align="center"><b>Play online: <a href="https://furkiozknn.github.io/topkapi-gecesi/">https://furkiozknn.github.io/topkapi-gecesi/</a></b> (desktop and phone, no install)</p>
-
 <!-- portals:start -->
-<p align="center">Also on: <a href="https://furkiozknn.itch.io/topkapi-gecesi">itch.io</a></p>
+<p align="center">
+  Also on: <a href="https://furkiozknn.itch.io/topkapi-gecesi"><strong>itch.io</strong></a>
+</p>
 <!-- portals:end -->
 
-## Highlights
+<p align="center">
+  <strong>A 3D stealth game at night in an Ottoman palace: the Spoon-maker's Diamond has been swapped for a fake, and you, a young palace page, sneak through the courts, the Harem and the Treasury to put the real one back before dawn without being caught.</strong>
+</p>
 
-- **Real stealth rules.** Halberdiers, harem guards, the head cook and his cat walk patrol routes, stop and look
-  around, and their vision cones are drawn on the ground. The bright inner part of a cone sees you even in shadow; the
-  faint outer part sees you only when you stand in lantern light.
-- **Light and shadow matter.** Walls and cypresses cast moon shadows, lanterns and braziers make warm pools of light,
-  and the visibility meter shows how far a guard could see you right now. Snuff a lantern and its pool goes dark; a
-  guard who passes it later lights it again.
-- **Noise and guard states.** Running, gravel, a dash or a knocked-over vase sends out a sound ring. Guards go from
-  patrol to suspicious (`?`, they walk over to look) to alarm (`!`, they chase and call the guards nearby), then search
-  and return to the route. A thrown pebble lures them away. The cat cannot catch you, but it meows.
-- **9 night missions in 3 parts.** The Courts, the Harem and the Treasury. Each mission has an optional objective (a
-  lost tulip bulb, a secret letter or "be a ghost") and three stars: unseen, swift and the optional objective, 27 in all.
-- **A bot that really plays.** `?auto` plays all nine missions with the same inputs a player has: it predicts the
-  patrols and plans a timed route with a space-time A* search that keeps out of every cone and noise ring.
-  Measured: **9/9 missions, 27/27 stars, 0 alarms**, 60 fps, 26-33 draw calls in play.
-- **Night music that reacts.** A synthesised ney line over a kanun ostinato in makam Hicaz, crickets, a fountain and
-  footsteps on stone, gravel, marble and carpet. When a guard grows suspicious the kanun speeds up and a darbuka joins.
-- **One file, made in code.** One `index.html` with Three.js r170 from a CDN; every mesh, texture and sound is
-  generated in code. Turkish by default, English with one key.
+<!-- gameplay gif -->
+
+## Features
+
+- **Nine night missions across three palace quarters:** Sneak through The Courts, The Harem, and The Treasury across 9 distinct missions, each featuring an optional objective (a lost tulip bulb, a secret letter, or "be a ghost") and 27 total stars to earn before dawn breaks after 7 minutes.
+- **Dynamic vision cones & patrol AI:** Halberdiers, harem guards, the head cook and his cat patrol active routes; bright inner cones spot you even in shadow, while faint outer cones spot you in lantern light. Footstep gravel and noise rings alert guards from patrol to suspicious (`?`) to alarm (`!`), with pebble throws (up to 9 m) to lure them away.
+- **Interactive light, shadow & hiding spots:** Moonlight casts long cypress shadows against warm lantern pools; snuff lanterns to extinguish light zones, hide behind curtains or inside chests, and monitor exposure with the animated almond-eye visibility meter.
+- **Space-time A\* bot simulation:** An automated `?auto` bot plans timed escape routes avoiding every vision cone and noise ring using a space-time A* search—tested and verified across **9/9 missions, 27/27 stars, 0 alarms**, 60 fps, and 26–33 draw calls in play.
+- **Ultra-lean zero-asset performance:** A single `index.html` running Three.js r170 delivering 60 fps at 26–33 draw calls in play (39–47 on title, 78k–84k triangles) on Intel UHD 620, with 100% procedural meshes, textures, and makam Hicaz Web Audio.
 
 ## How to play
 
 > [!TIP]
-> Crouch (`C`) in the shadows and watch the cones. Wait until a guard turns away, then move. A pebble (`Q`) thrown
-> behind a guard pulls him off his route for a few seconds.
+> **Goal:** Pick up the clue (a scroll, the real diamond, the treasury key), then reach the gold ring at the exit (or place the diamond on the pedestal in the final mission) before dawn after 7 minutes. Being caught sends you back to the last quiet fountain checkpoint.
 
-Each mission: pick up the clue (a scroll, the real diamond, the treasury key), then reach the gold ring at the exit (or
-set the diamond on the pedestal in the last mission). Dawn comes after seven minutes. Hide behind curtains or in
-chests, snuff lanterns and throw pebbles; being caught sends you back to the last quiet fountain (checkpoint).
+1. **Stay in the shadows:** Crouch (`C` or hold `Ctrl`) to lower your visibility and quiet your steps. Watch guard vision cones: the bright inner cone spots you anywhere; the faint outer cone spots you only in lantern light.
+2. **Distract and manipulate:** Throw a pebble (`Q`, up to 9 m) behind a guard to pull him off his route. Snuff lanterns (`E`) to plunge hallways into darkness, or hide inside chests and behind curtains (`E`).
+3. **Ghost to the exit:** Time your dashes (`Space`), collect the mission clue, fulfill the optional objective (bulb, letter, or ghost), and reach the gold exit ring unseen.
 
 <details>
 <summary><b>The nine missions</b></summary>
@@ -86,8 +77,9 @@ chests, snuff lanterns and throw pebbles; being caught sends you back to the las
 | Pause | `P` or `Esc` | Pause button |
 | Music / effects / language | `M` / `X` / `L` | top bar buttons |
 
-Settings are saved in `localStorage` under `arena.topkapi.settings`, progress under `arena.topkapi.save` and the best
-result under `arena.topkapi.best`.
+- **Global hotkeys:** `P` / `Esc` pause, `M` music, `X` effects, `L` language (Turkish / English).
+- **Audio & touch:** Dedicated top bar controls mute music and sound effects; touch offers a responsive left virtual stick and action buttons.
+- **Persistence:** Settings are saved in `localStorage` under `arena.topkapi.settings`, progress under `arena.topkapi.save`, and the best results under `arena.topkapi.best`. Turkish is default, English with `L`.
 
 <details>
 <summary><b>URL flags for testing</b></summary>
@@ -105,8 +97,7 @@ result under `arena.topkapi.best`.
 | `?nosave` | do not read or write progress |
 | `?noassets` | accepted; the game has no asset files, so nothing changes |
 
-The live state is on `window.topkapi` (screen, mission, player, guards, stars, bot log, fps, draw calls, errors,
-assets).
+The live state is on `window.topkapi` (screen, mission, player, guards, stars, bot log, fps, draw calls, errors, assets).
 
 </details>
 
@@ -125,87 +116,59 @@ assets).
   </tr>
 </table>
 
-## Redesign (2026-11)
+## Redesign & Performance
 
-<p align="center"><img src="docs/redesign-before-after.png" width="100%" alt="Title screen before and after the redesign: a blurred palace behind a centred card, then a moonlit Bosphorus and palace beside a dark lacquer card with gold filigree"></p>
-<p align="center"><img src="docs/redesign-before-after-gameplay.png" width="100%" alt="The Consorts' Courtyard before and after the redesign, same camera"></p>
+**Art direction:** Moonlit noir stealth. Night blue `#0B1D3A`, moonlight `#9DB4FF`, warm lantern pool `#FFB547`, imperial gold `#C9A227`, and Iznik white and cobalt blue; cold moonlight against warm lantern pools, with dark lacquer UI and gold filigree.
 
-**Art direction: moonlit noir stealth.** Night blue #0B1D3A, moonlight #9DB4FF, lantern #FFB547, gold #C9A227 and
-Iznik white and blue; cold moonlight against warm lantern pools, with the UI in dark lacquer and gold filigree.
+**Visual updates (rules, guards, missions, stars, bot, and saves are untouched):**
+- **World:** Night sky with a low moon and clouds over a shader Bosphorus with a moon path; world-space stone, Iznik tile, marble, carpet, lead and ashlar textures; blind arcades with tile panels, carved doors, eaves, colonnades with bay domes, lantern light shafts and warm pools, contact shadows and lathe cypresses.
+- **Characters:** Guards, the page and the cat rebuilt from lathe kaftans with gold trim, caps, turban and fez, with a walk cycle in the vertex shader and a moonlit rim light so silhouettes read clearly in the dark.
+- **FX & UI:** Mist outside the walls, pulsing alert icons, gravel and running dust, moths at the lanterns, star and window flicker. Lacquer cartouches for the top bar, SVG filigree corners, gold-leaf buttons, almond-eye visibility meter whose lids open with exposure, and gold-ink palace map. Phone portrait and landscape re-laid out so prompts and touch controls never overlap.
 
-- **World:** a night sky with a low moon and clouds over a shader Bosphorus with a moon path; world-space stone,
-  Iznik tile, marble, carpet, lead and ashlar textures; blind arcades with tile panels, carved doors, eaves,
-  colonnades with bay domes, lantern light shafts and warm pools, contact shadows and lathe cypresses.
-- **Characters:** guards, the page and the cat rebuilt from lathe kaftans with gold trim, caps, turban and fez, with a
-  walk cycle in the vertex shader and a moonlit rim light so silhouettes read in the dark.
-- **FX:** mist outside the walls, pulsing alert icons, gravel and running dust, moths at the lanterns, star and window
-  flicker.
-- **UI:** lacquer cartouches for the top bar, SVG filigree corners, gold-leaf buttons, an almond eye for the visibility
-  meter whose lids open with exposure, a gold-ink palace map, and lacquer touch controls. The title card sits to the
-  left so the palace shows. Phone portrait and landscape were re-laid out so the prompt, the eye meter and the touch
-  controls no longer overlap.
-- **Kept:** the rules, guards, missions, stars, bot, saves, flags, audio and both languages are unchanged.
+**Measured on an Intel UHD 620 (headless Chrome, 1280x720):**
+- Frame rate: 60 &rarr; 60 fps
+- Draw calls: 27–31 &rarr; 29–33 in play (39 &rarr; 47 on title)
+- Triangles: 27k–39k &rarr; 78k–84k
+- `?auto` bot finishes all **9/9 missions with 27/27 stars** and 0 JS errors, with and without `?noassets`.
 
-Measured in headless Chrome on an Intel UHD 620 at 1280x720, before → after: 60 → 60 fps; draw calls 27-31 → 29-33 in
-play and 39 → 47 on the title; triangles 27k-39k → 78k-84k. The bot still finishes **9/9 missions with 27/27 stars**
-and 0 JS errors, with and without ?noassets.
+![Title screen before and after](docs/redesign-before-after.png)
+
+![Gameplay before and after](docs/redesign-before-after-gameplay.png)
 
 ## Running locally
 
-Serve the folder over HTTP, for example:
+Serve the folder over HTTP (ES modules do not load from `file://`):
 
-```
+```bash
 python -m http.server 8000
 ```
 
-then open <http://localhost:8000/>.
+Then open <http://localhost:8000/>.
 
-## How it was made
+## Made with Claude Code
 
-Built by **Claude Opus 5.5** with Claude Code from one prompt: [prompts/topkapi-gecesi.md](prompts/topkapi-gecesi.md).
-Everything is generated in code, so there are no asset files and no credits to list.
+Built by **Claude Opus 5.5** with Claude Code from one prompt: [prompts/topkapi-gecesi.md](prompts/topkapi-gecesi.md). Everything is generated in code, so there are no asset files and no credits to list; Three.js is loaded from a CDN under its MIT licence.
 
 <details>
 <summary><b>Technical notes</b></summary>
 
-- **Simulation core:** the rules (grid, light, sight, noise, guard states, player and the planner bot) live in one plain
-  `CORE` script with no DOM or Three.js, so the same code runs in the page and in node tests.
-- **Bot:** it predicts the guard patrols and plans a timed route with a space-time A* search over (cell, 0.2 s) that
-  keeps out of every cone and noise ring, hides behind a curtain when that is the only safe spot, and replans whenever
-  a guard leaves its route.
-- **3D:** the level is merged into a few static meshes with vertex colours; lantern light is baked into a vertex
-  attribute and rebaked only when a lantern is snuffed or relit. One moon light with a 1024 shadow map covers only the
-  palace grounds.
-- **Performance:** measured in headless Chrome on an Intel UHD 620 (i5-10210U) at 1280x720: 60 fps, 26-33 draw calls
-  and 68k-84k triangles during play (after the 2026-11 redesign).
+- **Simulation core:** The rules (grid, light, sight, noise, guard states, player and the planner bot) live in one plain `CORE` script with no DOM or Three.js, so the same code runs in the page and in node tests.
+- **Bot:** It predicts guard patrols and plans a timed route with a space-time A* search over (cell, 0.2 s) that keeps out of every cone and noise ring, hides behind curtains when that is the only safe spot, and replans whenever a guard leaves its route.
+- **3D & lighting:** The level is merged into a few static meshes with vertex colours; lantern light is baked into a vertex attribute and rebaked only when a lantern is snuffed or relit. One moon light with a 1024 shadow map covers only the palace grounds.
+- **Audio (Web Audio only):** Synthesised ney melody over a kanun ostinato in makam Hicaz, ambient crickets, running fountain, and surface-dependent footsteps (stone, gravel, marble, carpet) with dynamic tempo and darbuka on suspicion.
+- **Performance:** Measured in headless Chrome on an Intel UHD 620 (i5-10210U) at 1280x720: 60 fps, 26–33 draw calls and 68k–84k triangles during play.
 
 </details>
 
-Topkapı Gecesi is part of the **Claude Game Arena** series, where each game is built by a Claude model from one
-prompt. The other games: [Hisar](https://furkiozknn.github.io/kale-savunmasi/) ·
-[Çay Ocağı](https://furkiozknn.github.io/cay-ocagi/) · [Çini Ustası](https://furkiozknn.github.io/cini-ustasi/) ·
-[Martı](https://furkiozknn.github.io/marti/) · [Kervan](https://furkiozknn.github.io/kervan/) ·
-[Dolmuş](https://furkiozknn.github.io/dolmus/) · [Peri Golf](https://furkiozknn.github.io/peri-golf/) ·
-[Mehter](https://furkiozknn.github.io/mehter/) · [Boğaz Vapuru](https://furkiozknn.github.io/bogaz-vapuru/) ·
-[Simit Fırını](https://furkiozknn.github.io/simit-firini/) · [Karagöz](https://furkiozknn.github.io/karagoz/) ·
-[Lale Bahçesi](https://furkiozknn.github.io/lale-bahcesi/)
+### Claude Game Arena
 
-**Round 5:** [Kapadokya Balonu](https://furkiozknn.github.io/kapadokya-balonu/) ·
-[Ebru](https://furkiozknn.github.io/ebru/) · [Kırkpınar](https://furkiozknn.github.io/kirkpinar/) ·
-[Çarşı Kaçışı](https://furkiozknn.github.io/carsi-kacisi/)
+Topkapı Gecesi is part of the **Claude Game Arena** series, where each game is built by a Claude model from one prompt.
 
-**Round 6:** **Topkapı Gecesi** · [Hamsi](https://furkiozknn.github.io/hamsi/) ·
-[Pamukkale](https://furkiozknn.github.io/pamukkale/) · [Mimar Sinan](https://furkiozknn.github.io/mimar-sinan/)
+[Hisar](https://furkiozknn.github.io/kale-savunmasi/) · [Çay Ocağı](https://furkiozknn.github.io/cay-ocagi/) · [Çini Ustası](https://furkiozknn.github.io/cini-ustasi/) · [Martı](https://furkiozknn.github.io/marti/) · [Kervan](https://furkiozknn.github.io/kervan/) · [Dolmuş](https://furkiozknn.github.io/dolmus/) · [Peri Golf](https://furkiozknn.github.io/peri-golf/) · [Mehter](https://furkiozknn.github.io/mehter/) · [Boğaz Vapuru](https://furkiozknn.github.io/bogaz-vapuru/) · [Simit Fırını](https://furkiozknn.github.io/simit-firini/) · [Karagöz](https://furkiozknn.github.io/karagoz/) · [Lale Bahçesi](https://furkiozknn.github.io/lale-bahcesi/)
 
-## Türkçe
+**Round 5:** [Kapadokya Balonu](https://furkiozknn.github.io/kapadokya-balonu/) · [Ebru](https://furkiozknn.github.io/ebru/) · [Kırkpınar](https://furkiozknn.github.io/kirkpinar/) · [Çarşı Kaçışı](https://furkiozknn.github.io/carsi-kacisi/)
 
-**Topkapı Gecesi**, gece bir Osmanlı sarayında geçen 3D gizlilik oyunu. Kaşıkçı Elması sahtesiyle değiştirilmiş; genç
-bir iç oğlanı olarak avlulardan, Harem'den ve Hazine'den gizlice geçip ipuçlarını bulur, gerçek elması şafaktan önce
-yerine koyarsın. Muhafızların görüş konileri, fener ışığı ve gürültü önemli: gölgede çömel, fenerleri söndür, çakıl
-taşı atıp muhafızları uzaklaştır. 3 bölümde 9 gece görevi, 27 yıldız. Kurulum yok; masaüstünde ve telefonda tarayıcıda
-oynanır. Claude Opus 5.5 tarafından Claude Code ile tek bir prompt'tan yapıldı.
-
-**Oyna:** https://furkiozknn.github.io/topkapi-gecesi/
+**Round 6:** **Topkapı Gecesi** · [Hamsi](https://furkiozknn.github.io/hamsi/) · [Pamukkale](https://furkiozknn.github.io/pamukkale/) · [Mimar Sinan](https://furkiozknn.github.io/mimar-sinan/)
 
 ## License
 
