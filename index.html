@@ -6,6 +6,7 @@
 <meta name="arena-game" content="topkapi-gecesi">
 <title>Topkapı Gecesi</title>
 <meta name="description" content="A 3D stealth game at night in an Ottoman palace: put the Spoon-maker's Diamond back before dawn. Claude Game Arena, built by Claude Opus 5.5.">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
@@ -1694,6 +1695,88 @@ input[type=range] {
 <div class="fade" id="fade"></div>
 <div id="dbg" hidden></div>
 <script>window.__errs = []; addEventListener('error', e => window.__errs.push(String(e.message || e))); addEventListener('unhandledrejection', e => window.__errs.push('promise: ' + String(e.reason && e.reason.message || e.reason)));</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+const swCode = `
+const CACHE_NAME = 'topkapi-gecesi-v1';
+const ASSETS = [
+  './',
+  './index.html',
+  'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js',
+  'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/',
+  'https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap'
+];
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(ASSETS).catch(() => {});
+    })
+  );
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) return caches.delete(key);
+        })
+      );
+    })
+  );
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(e.request).then(response => {
+        if (!response || response.status !== 200 || response.type !== 'basic' && response.type !== 'cors') {
+          return response;
+        }
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(e.request, responseToCache);
+        });
+        return response;
+      }).catch(() => {
+        if (e.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+      });
+    })
+  );
+});
+`;
+const manifestCode = JSON.stringify({
+  "name": "Topkapı Gecesi",
+  "short_name": "Topkapı",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#050d1e",
+  "theme_color": "#050d1e",
+  "icons": []
+});
+try {
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(swBlob);
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register(swUrl).catch(() => {});
+  }
+} catch (e) {}
+try {
+  const mBlob = new Blob([manifestCode], { type: 'application/json' });
+  const mUrl = URL.createObjectURL(mBlob);
+  let link = document.querySelector('link[rel="manifest"]');
+  if (link) link.href = mUrl;
+} catch (e) {}
+</script>
 <script>
 // ---------------------------------------------------------------------------
 // CORE: the whole game rule set (grid, light, guards, noise, player, planner bot).
