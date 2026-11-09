@@ -643,8 +643,8 @@ b, .num { font-variant-numeric: tabular-nums; }
   gap: 10px;
 }
 .tb {
-  width: 58px;
-  height: 58px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   border: 1.5px solid var(--line);
   background: var(--lacquer);
@@ -3878,7 +3878,39 @@ function showTouch() { if (INP.touch) return; INP.touch = true; if (G.screen ===
   const up = e => { if (e.pointerId !== id) return; id = null; kn.style.transform = ''; INP.sx = INP.sy = 0; };
   st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
   const tap = (el, fn) => el.addEventListener('pointerdown', e => { audioInit(); e.preventDefault(); fn(); });
-  tap($('t-use'), () => { INP.interact = true; }); tap($('t-throw'), () => { INP.throwQ = true; }); tap($('t-dash'), () => { INP.dash = true; });
+  function throwPebble() {
+    if (S && S.pebbles > 0 && !S.pebble) {
+      const P = S.p, L = S.L;
+      let target = null;
+      if (SET.oneHand || INP.touch) {
+        let bestDist = 1e9;
+        for (let i = 0; i < L.N; i++) {
+          if (!L.gwalk[i]) continue;
+          const x = C.ccx(L, i), z = C.ccz(L, i);
+          const d = Math.hypot(x - P.x, z - P.z);
+          if (d > 9 || d < 1) continue;
+          let inCone = false;
+          for (const g of S.guards) {
+            const T = C.GT[g.type];
+            const gdx = x - g.x, gdz = z - g.z, gd = Math.hypot(gdx, gdz);
+            if (gd < T.far && Math.abs(C.angDiff(g.h, Math.atan2(gdz, gdx))) < T.fov * D2R) {
+              inCone = true; break;
+            }
+          }
+          if (!inCone && d < bestDist) { bestDist = d; target = { x, z }; }
+        }
+      }
+      if (target) {
+        let dx = target.x - P.x, dz = target.z - P.z, d = Math.hypot(dx, dz);
+        S.pebble = { x0: P.x, z0: P.z, x1: target.x, z1: target.z, t: 0, dur: 0.3 + d * 0.045 };
+        S.pebbles--; S.stats.pebbles++;
+        C.ev(S, { k: 'throw' });
+      } else {
+        INP.throwQ = true;
+      }
+    }
+  }
+  tap($('t-use'), () => { INP.interact = true; }); tap($('t-throw'), () => { throwPebble(); }); tap($('t-dash'), () => { INP.dash = true; });
   tap($('t-crouch'), () => { INP.crouchT = !INP.crouchT; $('t-crouch').classList.toggle('on', INP.crouchT); });
   tap($('t-pause2'), () => togglePause());
   const run = $('t-run');
