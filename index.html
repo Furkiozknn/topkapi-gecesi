@@ -1351,12 +1351,16 @@ const GT = {
   cook: { speed: 1.0, run: 3.0, fov: 46, near: 2.0, far: 7.5, catch: 1 },
   cat: { speed: 0.85, run: 2.0, fov: 70, near: 1.5, far: 5, catch: 0 },
 };
-// footstep noise radius (m) by gait and surface
+// Adim Sesi Halkasi (footstep ring): noise radius (m) by gait and surface; wood = creaky boards
 const NOISE = {
-  crouch: { stone: 0, marble: 0, carpet: 0, gravel: 1.6 },
-  walk: { stone: 1.2, marble: 1.4, carpet: 0, gravel: 4.5 },
-  run: { stone: 6, marble: 6.5, carpet: 3.5, gravel: 8.5 },
+  crouch: { stone: 0, marble: 0, carpet: 0, gravel: 1.6, wood: 2.2 },
+  walk: { stone: 1.2, marble: 1.4, carpet: 0, gravel: 4.5, wood: 5 },
+  run: { stone: 6, marble: 6.5, carpet: 3.5, gravel: 8.5, wood: 9 },
 };
+const stepNoise = (gait, surf) => (NOISE[gait] && NOISE[gait][surf]) || 0;
+// how much of a sound gets through what lies between source and listener (product along the line)
+const DAMP = { wall: 0.3, soft: 0.65 }; // masonry walls; curtains, columns and trees
+const ROUND = 1.25; // sound that has to go round a corner through open cells travels this much "further"
 const SPEED = { crouch: 1.9, walk: 3.4, run: 5.6, dash: 10 };
 const STEPLEN = { crouch: 0.7, walk: 0.95, run: 1.35 };
 
@@ -1365,7 +1369,7 @@ const TILE = {};
 function def(chars, p) { for (const c of chars) TILE[c] = Object.assign({ solid: 0, tall: 0, floor: null }, p); }
 def('#km', { solid: 1, tall: 1, wall: 1 });
 def(' ', { solid: 1, tall: 1, void: 1 });
-def('.', { floor: 'stone' }); def(',', { floor: 'gravel' }); def('_', { floor: 'carpet' }); def('=', { floor: 'marble' });
+def('.', { floor: 'stone' }); def(',', { floor: 'gravel' }); def('_', { floor: 'carpet' }); def('=', { floor: 'marble' }); def('w', { floor: 'wood' });
 def('~F', { solid: 1, water: 1 }); def('K', { solid: 1, cp: 1 });
 def('To', { solid: 1, tall: 1 });
 def('C', { solid: 1, hide: 'chest' }); def('H', { solid: 1, tall: 1, hide: 'curtain' });
@@ -1398,9 +1402,9 @@ const LEVELS = [
       '#..,,,,,,,,,,,.#.............#',
       '#.......b......#T...........T#',
       '########..######...L..#.######',
-      '#......#..#...........#......#',
-      '#.C....#..#..L..o.o.o.#......#',
-      '#......#..#.....o.!.o.#....X.#',
+      '#......#.w#...........#......#',
+      '#.C....#.w#..L..o.o.o.#......#',
+      '#......#.w#.....o.!.o.#....X.#',
       '#H..............o...o........#',
       '#......#..#..t........#..B...#',
       '#T....C#..#T.........T#T....T#',
@@ -1484,7 +1488,7 @@ const LEVELS = [
       '#H____#____H#_____#H____#____#',
       '###_#####_#####_#####_#####_##',
       '#.o.o.o.o.o.o.o.o.o.o.o.o.o..#',
-      '#............................#',
+      '#.................wwwwww.....#',
       '#..L.....~~~~......~~~~...L..#',
       '#........~FF~..L...~FF~......#',
       '#.t.t....~~~~......~~~~..t.t.#',
@@ -1633,7 +1637,7 @@ const LEVELS = [
       '#######==#########==##########',
       '#__D___H_____#______C________#',
       '#_____!______#_______________#',
-      '#B___________=_____________KP#',
+      '#Bwwwww______=_____________KP#',
       '#__D____D____#____B______C___#',
       '##############################',
     ],
@@ -1678,7 +1682,7 @@ function parse(D, idx) {
     const cnt = {}; let best = null, bn = 0; const c = i % w, r = (i / w) | 0;
     for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
       const cc = c + dc, rr = r + dr; if (cc < 0 || rr < 0 || cc >= w || rr >= h) continue;
-      const f = L.floor[rr * w + cc]; if (!f || f === 'gravel') continue; cnt[f] = (cnt[f] || 0) + 1; if (cnt[f] > bn) { bn = cnt[f]; best = f; }
+      const f = L.floor[rr * w + cc]; if (!f || f === 'gravel' || f === 'wood') continue; cnt[f] = (cnt[f] || 0) + 1; if (cnt[f] > bn) { bn = cnt[f]; best = f; }
     }
     if (best || pass === 1) L.floor[i] = best || def0;
   }
@@ -1701,6 +1705,36 @@ function los(L, x0, z0, x1, z1) {
   const c0 = cellAt(L, x0, z0), c1 = cellAt(L, x1, z1);
   for (let k = 1; k < n; k++) { const t = k / n, c = cellAt(L, x0 + dx * t, z0 + dz * t); if (c !== c0 && c !== c1 && (c < 0 || L.tall[c])) return false; }
   return true;
+}
+// sound: the straight line is damped by each wall (and, less, curtain or tree) it crosses;
+// sound can also go round through open cells (anything not tall), at a small loss per metre
+function damping(L, x0, z0, x1, z1) {
+  const dx = x1 - x0, dz = z1 - z0, d = Math.hypot(dx, dz), n = Math.ceil(d / 0.35);
+  const c0 = cellAt(L, x0, z0), c1 = cellAt(L, x1, z1); let a = 1, last = c0;
+  for (let k = 1; k < n; k++) {
+    const t = k / n, c = cellAt(L, x0 + dx * t, z0 + dz * t); if (c === last || c === c1) continue; last = c;
+    if (c < 0 || TILE[L.ch[c]].wall || TILE[L.ch[c]].void) a *= DAMP.wall; else if (L.tall[c]) a *= DAMP.soft;
+  }
+  return a;
+}
+function soundField(L, nz) { // open-cell distance (m) from the noise, out to its reach
+  const N = L.N, w = L.w, f = new Float32Array(N).fill(1e9), s = cellAt(L, nz.x, nz.z), q = [s]; if (s < 0) return f; f[s] = 0;
+  const lim = nz.r / ROUND;
+  for (let qi = 0; qi < q.length; qi++) {
+    const cur = q[qi], c = cur % w, r = (cur / w) | 0;
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+      if (!dr && !dc) continue; const cc = c + dc, rr = r + dr; if (cc < 0 || rr < 0 || cc >= w || rr >= L.h) continue;
+      const n = rr * w + cc; if (L.tall[n] || (dr && dc && (L.tall[r * w + cc] || L.tall[rr * w + c]))) continue;
+      const nd = f[cur] + (dr && dc ? 1.414 : 1) * CELL; if (nd < f[n] && nd <= lim + CELL) { f[n] = nd; q.push(n); }
+    }
+  }
+  return f;
+}
+function hears(S, nz, x, z) {
+  const d = Math.hypot(nz.x - x, nz.z - z); if (d > nz.r) return false;
+  if (d <= nz.r * damping(S.L, nz.x, nz.z, x, z)) return true;
+  if (!nz.field) nz.field = soundField(S.L, nz);
+  const i = cellAt(S.L, x, z); return i >= 0 && nz.field[i] * ROUND <= nz.r;
 }
 function lanternAt(S, x, z) {
   const L = S.L; let s = 0;
@@ -1764,14 +1798,14 @@ function newSim(idx, opts = {}) {
     guards: [], lit: new Uint8Array(L.lights.length).fill(1), snuffT: new Float32Array(L.lights.length), broken: new Uint8Array(L.vases.length), got: new Uint8Array(L.items.length),
     cp: { x: L.start.x, z: L.start.z }, cpIdx: -1, respawnT: 0, lightC: new Float32Array(L.N), lightV: 0, pebble: null, pebbles: 3, placed: false,
     need: L.items.filter(o => o.kind === 'clue').length, clues: 0, optGot: false, unseen: true, ghostOk: true, needT: -9,
-    stats: { alerts: 0, sus: 0, caught: 0, snuffed: 0, pebbles: 0, vases: 0, hides: 0 } };
+    stats: { alerts: 0, sus: 0, caught: 0, snuffed: 0, pebbles: 0, vases: 0, hides: 0, heard: 0 } };
   S.guards = L.D.guards.map((G, k) => makeGuard(L, G, k));
   relight(S);
   return S;
 }
 function clone(S) { const L = S.L; S.L = null; const C = structuredClone(S); S.L = L; C.L = L; return C; }
 function ev(S, o) { S.events.push(o); }
-function noise(S, x, z, r, kind, src = -1, big = false) { S.noises.push({ x, z, r, kind, src, big }); ev(S, { k: 'noise', x, z, r, kind }); }
+function noise(S, x, z, r, kind, src = -1, big = false) { const e = { k: 'noise', x, z, r, kind, heard: 0 }; S.noises.push({ x, z, r, kind, src, big, e }); ev(S, e); }
 
 // ---------------------------------------------------------------------------
 // Player
@@ -1854,7 +1888,7 @@ function updPlayer(S, I, dt) {
     const g = P.gait === 'idle' ? 'walk' : P.gait;
     if (P.stepAcc >= STEPLEN[g]) {
       P.stepAcc = 0; ev(S, { k: 'step', surf: P.surf, gait: g, x: P.x, z: P.z });
-      const r = NOISE[g][P.surf] || 0; if (r >= 0.5) noise(S, P.x, P.z, r, 'step');
+      const r = stepNoise(g, P.surf); if (r >= 0.5) noise(S, P.x, P.z, r, 'step');
     }
   }
   // interaction
@@ -2006,8 +2040,8 @@ function updGuard(S, g, dt) {
   } else if (g.state !== 'alert') g.sus = Math.max(0, g.sus - dt * 0.22);
   for (const nz of S.noises) {
     if (nz.src === g.k) continue;
-    const d = Math.hypot(nz.x - g.x, nz.z - g.z); if (d > nz.r) continue;
-    if (d > nz.r * 0.6 && !los(S.L, g.x, g.z, nz.x, nz.z)) continue;
+    if (!hears(S, nz, g.x, g.z)) continue;
+    if (nz.e && !nz.e.heard) { nz.e.heard = 1; if (nz.kind === 'step') S.stats.heard++; }
     if (g.state === 'alert') { if (see <= 0) { g.tx = nz.x; g.tz = nz.z; } }
     else setSus(S, g, nz.x, nz.z, nz.big);
   }
@@ -2114,7 +2148,7 @@ function plan(S, goals, opt = {}) {
     if (m & bk) return (m & bu) !== 0;
     let bad = false;
     if (L.hideAt[c] < 0) {
-      const x = ccx(L, c), z = ccz(L, c), vis = S.lightC[c] * (crouch ? 0.68 : 1), nr = NOISE[crouch ? 'crouch' : 'walk'][L.floor[c]] || 0;
+      const x = ccx(L, c), z = ccz(L, c), vis = S.lightC[c] * (crouch ? 0.68 : 1), nr = stepNoise(crouch ? 'crouch' : 'walk', L.floor[c]);
       for (let k = 0; k < ng && !bad; k++) {
         const o = (k * T + t) * 3, gx = pred[o], gz = pred[o + 1], gh = pred[o + 2], ty = GTs[k];
         const dx = x - gx, dz = z - gz, d = Math.hypot(dx, dz);
@@ -2245,7 +2279,7 @@ function botInput(S, B) {
   return I;
 }
 
-return { CELL, DT, TILE, GT, NOISE, SPEED, LEVELS, PARTS, MOON, LIGHT, parse, newSim, step, clone, focus, lightAt, cellAt, ccx, ccz, los, plan, predict, makeBot, botInput, result, angDiff, clamp, lerp, PSTEP };
+return { CELL, DT, TILE, GT, NOISE, stepNoise, hears, damping, SPEED, LEVELS, PARTS, MOON, LIGHT, parse, newSim, step, clone, focus, lightAt, cellAt, ccx, ccz, los, plan, predict, makeBot, botInput, result, angDiff, clamp, lerp, PSTEP };
 })();
 if (typeof module !== 'undefined') module.exports = CORE;
 </script>
@@ -2308,7 +2342,7 @@ const unlocked = i => i === 0 || !!PROG.done[i - 1] || FLAG.auto;
 const I18N = {
   tr: {
     subtitle: 'Gece yarısı sarayda gizli bir görev', play: 'Oyna', cont: 'Devam Et: {m}', settings: 'Ayarlar', palaceMap: 'Saray Haritası',
-    howto: 'Kaşıkçı Elması çalındı, yerinde sahtesi var. Genç bir iç oğlanı olarak muhafızlara görünmeden ipuçlarını topla ve gerçek elması şafaktan önce yerine koy. Gölgede kal, fenerleri söndür, perdelere saklan.',
+    howto: 'Kaşıkçı Elması çalındı, yerinde sahtesi var. Genç bir iç oğlanı olarak muhafızlara görünmeden ipuçlarını topla ve gerçek elması şafaktan önce yerine koy. Gölgede kal, fenerleri söndür, perdelere saklan; adımlarının ses halkasına dikkat et.',
     mission: 'Görev', toDawn: 'Şafağa', pauseBtn: 'Duraklat (P)', soundBtn: 'Ses (M müzik, X efekt)', langBtn: 'Dil (L)', objectives: 'Görevler', visibility: 'Görünürlük',
     crouchS: 'Çömel', throwS: 'Taş', useS: 'Kullan', runS: 'Koş', dashS: 'Atıl', pauseS: 'Dur',
     paused: 'Duraklatıldı', resume: 'Devam', restart: 'Görevi Baştan Al', mainMenu: 'Ana Menü', master: 'Ana ses', music: 'Müzik', effects: 'Efektler',
@@ -2319,7 +2353,8 @@ const I18N = {
     obj_clue: 'İpucunu bul', obj_diamond: 'Gerçek elması al', obj_key: 'Hazine anahtarını al', obj_exit: 'Çıkışa ulaş', obj_place: 'Elması kaideye koy',
     star_unseen: 'Görünmeden: hiç alarm yok', star_time: 'Hızlı: {s} içinde', optional: 'İsteğe bağlı',
     vis_hidden: 'Saklandın', vis_dark: 'Gölgede', vis_dim: 'Loş', vis_lit: 'Işıkta', gait_idle: 'duruyor', gait_crouch: 'çömelmiş', gait_walk: 'yürüyor', gait_run: 'koşuyor',
-    surf_stone: 'taş', surf_gravel: 'çakıl!', surf_carpet: 'halı', surf_marble: 'mermer',
+    surf_stone: 'taş', surf_gravel: 'çakıl!', surf_carpet: 'halı', surf_marble: 'mermer', surf_wood: 'gıcırtılı tahta!',
+    ring_m: 'ses {r} m', ring_silent: 'sessiz', ringHint: 'Adım Sesi Halkası: her adımın sesi bir halka gibi yayılır. Koşmak, mermer, çakıl ve gıcırtılı tahta halkayı büyütür; çömelmek ve halı küçültür, duvarlar keser. Halkanın içindeki muhafız sese gelir.',
     pr_clue: 'İpucunu al', pr_bulb: 'Lale soğanını al', pr_letter: 'Mektubu oku', pr_curtain: 'Perdenin arkasına saklan', pr_chest: 'Sandığa saklan', pr_unhide: 'Çık',
     pr_snuff: 'Feneri söndür', pr_place: 'Gerçek elması kaideye koy',
     sus: ['Hm? Bir ses mi?', 'Orada biri mi var?', 'Rüzgâr mı acaba?', 'Kim o?'], susCook: ['Kedi, sen misin?', 'Kim karıştırıyor tencereleri?'],
@@ -2336,7 +2371,7 @@ const I18N = {
   },
   en: {
     subtitle: 'A secret errand in the palace at midnight', play: 'Play', cont: 'Continue: {m}', settings: 'Settings', palaceMap: 'Palace Map',
-    howto: 'The Spoon-maker’s Diamond has been swapped for a fake. As a young palace page, gather the clues unseen by the guards and put the real diamond back before dawn. Keep to the shadows, snuff the lanterns, hide behind curtains.',
+    howto: 'The Spoon-maker’s Diamond has been swapped for a fake. As a young palace page, gather the clues unseen by the guards and put the real diamond back before dawn. Keep to the shadows, snuff the lanterns, hide behind curtains and mind the ring your footsteps make.',
     mission: 'Mission', toDawn: 'Dawn in', pauseBtn: 'Pause (P)', soundBtn: 'Sound (M music, X effects)', langBtn: 'Language (L)', objectives: 'Objectives', visibility: 'Visibility',
     crouchS: 'Crouch', throwS: 'Pebble', useS: 'Use', runS: 'Run', dashS: 'Dash', pauseS: 'Pause',
     paused: 'Paused', resume: 'Resume', restart: 'Restart Mission', mainMenu: 'Main Menu', master: 'Master', music: 'Music', effects: 'Effects',
@@ -2347,7 +2382,8 @@ const I18N = {
     obj_clue: 'Find the clue', obj_diamond: 'Take the real diamond', obj_key: 'Take the treasury key', obj_exit: 'Reach the exit', obj_place: 'Set the diamond on the pedestal',
     star_unseen: 'Unseen: no alarm at all', star_time: 'Swift: within {s}', optional: 'Optional',
     vis_hidden: 'Hidden', vis_dark: 'In shadow', vis_dim: 'Dim', vis_lit: 'In the light', gait_idle: 'still', gait_crouch: 'crouching', gait_walk: 'walking', gait_run: 'running',
-    surf_stone: 'stone', surf_gravel: 'gravel!', surf_carpet: 'carpet', surf_marble: 'marble',
+    surf_stone: 'stone', surf_gravel: 'gravel!', surf_carpet: 'carpet', surf_marble: 'marble', surf_wood: 'creaky boards!',
+    ring_m: 'noise {r} m', ring_silent: 'silent', ringHint: 'Footstep Ring: every step spreads its sound as a ring. Running, marble, gravel and creaky boards make it bigger; crouching and carpet make it smaller, and walls block it. A guard inside the ring comes to check.',
     pr_clue: 'Take the clue', pr_bulb: 'Take the tulip bulb', pr_letter: 'Read the letter', pr_curtain: 'Hide behind the curtain', pr_chest: 'Hide in the chest', pr_unhide: 'Come out',
     pr_snuff: 'Snuff the lantern', pr_place: 'Set the real diamond on the pedestal',
     sus: ['Hm? Was that a sound?', 'Is someone there?', 'Just the wind?', 'Who is it?'], susCook: ['Cat, is that you?', 'Who is rattling my pots?'],
@@ -2803,6 +2839,14 @@ function buildLevel(L) {
     } else if (f === 'gravel') {
       const n = 3, s = CELL / n; F.mode(SM.gravel);
       for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) { const ax = x0 + a * s, az = z0 + b * s; F.quad([ax, 0.01, az + s], [ax + s, 0.01, az + s], [ax + s, 0.01, az], [ax, 0.01, az], pc(PAL.gravel), 0.08, pull); }
+    } else if (f === 'wood') {
+      // creaky boards: four planks with dark seams, ends staggered per row
+      F.mode(0).quad([x0, 0, z0 + CELL], [x0 + CELL, 0, z0 + CELL], [x0 + CELL, 0, z0], [x0, 0, z0], 0x2a1a10, 0, pull);
+      const n = 4, s = CELL / n, g = 0.025; F.mode(SM.wood);
+      for (let b = 0; b < n; b++) {
+        const az = z0 + b * s + g, cut = x0 + CELL * (((b + c) % 3) + 1) / 4;
+        for (const [ax, bx] of [[x0, cut], [cut, x0 + CELL]]) F.quad([ax + g, 0.01, az + s - 2 * g], [bx - g, 0.01, az + s - 2 * g], [bx - g, 0.01, az], [ax + g, 0.01, az], [0x8a5a32, 0x7a4c2a, 0x946238][(b * 2 + c + r) % 3], 0.06, pull);
+      }
     } else if (f === 'carpet') {
       const n = 3, s = CELL / n, edge = (dc, dr) => L.floor[(r + dr) * L.w + c + dc] !== 'carpet' || isWall(L, c + dc, r + dr); F.mode(SM.carpet);
       for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) {
@@ -3296,6 +3340,8 @@ function buildDynamic(L) {
   const ret = add(new THREE.Mesh(new THREE.RingGeometry(0.3, 0.4, 24), new THREE.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide })), D);
   ret.rotation.x = -Math.PI / 2; ret.visible = false; WORLD.reticle = ret;
   WORLD.rings = []; for (let k = 0; k < 10; k++) { const r = add(new THREE.Mesh(new THREE.RingGeometry(0.93, 1, 48), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false })), D); r.rotation.x = -Math.PI / 2; r.visible = false; r.renderOrder = 3; WORLD.rings.push({ m: r, t: 1, life: 1, r: 1 }); }
+  WORLD.pring = add(new THREE.Mesh(new THREE.RingGeometry(0.96, 1, 64), new THREE.MeshBasicMaterial({ color: 0xdfe8ff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide, fog: false })), D);
+  WORLD.pring.rotation.x = -Math.PI / 2; WORLD.pring.visible = false; WORLD.pring.renderOrder = 3; WORLD.pring.userData.r = 0;
   // lantern flames and halos
   const lp = [], lc = [], ls = [], la = [];
   for (const l of L.lights) { const y = l.kind === 'lantern' ? 2.25 : 1.3; lp.push(l.x, y, l.z, l.x, y, l.z); const a = col(0xffb050), b = col(0xffe0a0); lc.push(a.r, a.g, a.b, b.r, b.g, b.b); ls.push(3.2, 0.7); la.push(0.35, 0.95); }
@@ -3347,9 +3393,11 @@ function updateParticles(dt) {
   }
   g.attributes.position.needsUpdate = true; g.attributes.size.needsUpdate = true; g.attributes.alpha.needsUpdate = true; g.attributes.color.needsUpdate = true;
 }
-function ring(x, z, r, color) {
+// Adim Sesi Halkasi: a step ring is fainter than a vase or pebble; with reduced motion rings do not grow, they only fade
+const RMQ = matchMedia('(prefers-reduced-motion: reduce)');
+function ring(x, z, r, color, step = false) {
   const R = WORLD.rings.find(o => o.t >= o.life) || WORLD.rings[0];
-  R.t = 0; R.life = 0.6 + r * 0.05; R.r = r; R.m.material.color.set(color); R.m.position.set(x, 0.07, z); R.m.visible = true;
+  R.t = 0; R.life = 0.6 + r * 0.05; R.r = r; R.a = step ? 0.42 : 0.65; R.still = RMQ.matches; R.m.material.color.set(color); R.m.position.set(x, 0.07, z); R.m.visible = true;
 }
 
 // ---------------------------------------------------------------------------
@@ -3517,6 +3565,7 @@ const SFX = {
     const v = (gait === 'crouch' ? 0.3 : gait === 'run' ? 1 : 0.6) * vol;
     if (surf === 'gravel') for (let k = 0; k < 3; k++) nburst(0.05, { gain: 0.16 * v, f: 2800 + Math.random() * 1500, q: 1.5, at: k * 0.018, pan });
     else if (surf === 'carpet') nburst(0.06, { gain: 0.08 * v, type: 'lowpass', f: 420, pan });
+    else if (surf === 'wood') { tone(170 + Math.random() * 60, 0.22, { type: 'sawtooth', gain: 0.045 * v + 0.02, lp: 700, q: 6, slide: 1.35, attack: 0.04, pan }); tone(80, 0.06, { gain: 0.08 * v, pan }); }
     else { nburst(0.035, { gain: 0.1 * v, type: 'highpass', f: surf === 'marble' ? 2400 : 1500, pan }); tone(95, 0.05, { gain: 0.08 * v, pan }); }
   },
   murmur(pan = 0, vol = 1, hi = false) { const n = 4 + Math.floor(Math.random() * 4), base = hi ? 230 : 130 + Math.random() * 50; for (let k = 0; k < n; k++) tone(base * (0.85 + Math.random() * 0.4), 0.09 + Math.random() * 0.06, { type: 'square', gain: 0.035 * vol, at: k * 0.13, lp: 900, pan }); },
@@ -3722,6 +3771,7 @@ function startMission(i) {
   $('h-mission').textContent = (i + 1) + ' · ' + mName(i);
   buildObjectives();
   toast(t('intro', { p: t('partNames')[C.LEVELS[i].part], m: mName(i) }), 'info', 3200);
+  if (i === 0 && !G.bot) setTimeout(() => { if (G.screen === 'play' && G.S === S) toast(t('ringHint'), 'info', 7000); }, 3400);
   if (!G.simming) canvas.focus();
 }
 function buildObjectives() {
@@ -3796,7 +3846,9 @@ function updateHUD(dt) {
   $('vispanel').classList.toggle('lit', !hid && v >= 0.55); $('vispanel').classList.toggle('hid', hid);
   $('h-gait').textContent = hid ? '' : t('gait_' + (P.gait === 'idle' && INP.crouchT ? 'crouch' : P.gait));
   $('h-peb').textContent = S.pebbles; $('h-dash').style.width = ((1 - P.dashCd / 2.4) * 100) + '%';
-  $('h-surf').textContent = hid ? '' : t('surf_' + P.surf); $('h-surf').style.color = P.surf === 'gravel' ? 'var(--amber)' : '';
+  const nr = C.stepNoise(P.gait === 'idle' ? (P.crouch ? 'crouch' : 'walk') : P.gait, P.surf);
+  $('h-surf').textContent = hid ? '' : t('surf_' + P.surf) + ' · ' + (nr > 0 ? t('ring_m', { r: nr.toFixed(1) }) : t('ring_silent'));
+  $('h-surf').style.color = P.surf === 'gravel' || P.surf === 'wood' || nr >= 4 ? 'var(--amber)' : '';
   // interaction prompt
   const F = hid ? { kind: 'unhide' } : C.focus(S);
   if (F && !S.over) {
@@ -3823,7 +3875,7 @@ function handleEvents(S) {
     const g = e.g != null ? S.guards[e.g] : null;
     switch (e.k) {
       case 'step': if (!quiet) { SFX.step(e.surf, e.gait); if (e.surf === 'gravel' || e.gait === 'run') for (let k = 0; k < (e.gait === 'run' ? 3 : 2); k++) emit(S.p.x + (Math.random() - 0.5) * 0.3, 0.08, S.p.z + (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.5, 0.25 + Math.random() * 0.3, (Math.random() - 0.5) * 0.5, 0.7, 0.28, e.surf === 'gravel' ? 0xd8ccb0 : 0xa8a4a0, 0.35, 0.4); } break;
-      case 'noise': if (e.r >= 2 && !quiet) ring(e.x, e.z, e.r, e.kind === 'vase' || e.kind === 'pebble' ? 0xffb050 : e.kind === 'meow' ? 0xff90c0 : 0xdfe8ff); break;
+      case 'noise': if ((e.r >= 2 || e.kind === 'step') && !quiet) ring(e.x, e.z, e.r, e.kind === 'vase' || e.kind === 'pebble' || e.heard ? 0xffb050 : e.kind === 'meow' ? 0xff90c0 : 0xdfe8ff, e.kind === 'step'); break;
       case 'sus': if (!quiet) { if (e.type === 'cat') { SFX.meow(panOf(g.x, g.z)); } else { SFX.hm(panOf(g.x, g.z)); toast('“' + pick(t(e.type === 'cook' ? 'susCook' : 'sus')) + '”', 'info', 2000); } } break;
       case 'alert': if (!quiet && !e.called) { SFX.shout(panOf(g.x, g.z)); toast('“' + pick(t('alert')) + '”', 'bad', 2200); } break;
       case 'call': if (!quiet) toast('“' + t('call') + '”', 'bad', 2000); break;
@@ -3942,7 +3994,14 @@ function render(dt) {
     if (Math.random() < dt * 2.5 * part && G.screen !== 'end') { const x = CAM.tx + (Math.random() - 0.5) * 24, z = CAM.tz + (Math.random() - 0.5) * 18, ci = C.cellAt(S.L, x, z); if (ci >= 0 && !S.L.solid[ci] && S.L.floor[ci] !== 'carpet') emit(x, 0.5 + Math.random() * 1.5, z, (Math.random() - 0.5) * 0.4, 0.1, (Math.random() - 0.5) * 0.4, 3, 0.18, 0xd8f080, 0.9); }
   }
   // noise rings
-  if (WORLD.rings) for (const R of WORLD.rings) { if (R.t >= R.life) { R.m.visible = false; continue; } R.t += dt; const u = R.t / R.life; R.m.scale.setScalar(0.3 + R.r * u); R.m.material.opacity = 0.65 * (1 - u); }
+  if (WORLD.rings) for (const R of WORLD.rings) { if (R.t >= R.life) { R.m.visible = false; continue; } R.t += dt; const u = R.t / R.life; R.m.scale.setScalar(R.still ? R.r : 0.3 + R.r * u); R.m.material.opacity = (R.a || 0.65) * (1 - u) * (R.still ? 0.8 : 1); }
+  // the player's own footstep ring: how far the next step would carry at this gait on this floor
+  if (WORLD.pring) {
+    const P = S && S.p, on = S && G.screen === 'play' && P.hidden < 0 && S.respawnT <= 0 && P.gait !== 'idle', want = on ? C.stepNoise(P.gait, P.surf) : 0, M0 = WORLD.pring;
+    M0.userData.r += (want - M0.userData.r) * Math.min(1, dt * 8);
+    const rr = M0.userData.r; M0.visible = rr > 0.35;
+    if (M0.visible) { M0.position.set(P.x, 0.065, P.z); M0.scale.setScalar(rr); M0.material.opacity = 0.1 + 0.1 * Math.min(1, rr / 6); M0.material.color.setHex(rr >= 4 ? 0xffb050 : 0xdfe8ff); }
+  }
   updateParticles(dt);
   updateCamera(dt);
   UTIME.value = T;
