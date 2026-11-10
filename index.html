@@ -268,6 +268,10 @@ b, .num { font-variant-numeric: tabular-nums; }
     padding: 3px 10px;
     gap: 8px;
     font-size: 12.5px;
+    /* EN "Mission 1 · Dawn in 7:00" + stars is 381 px wide: on a 360/390 px phone the stars ran off the pill. They wrap to a second row instead */
+    flex-wrap: wrap;
+    row-gap: 2px;
+    min-width: 0;
   }
   .sep { display: none; }
 }
@@ -431,6 +435,10 @@ b, .num { font-variant-numeric: tabular-nums; }
   .eye { width: 62px; height: 34px; flex-basis: 62px; }
   .tools { gap: 8px; }
   .vtext b { font-size: 14px; }
+  /* phone: no title, and the surface/noise text on one line of its own (it wrapped to 2-3 lines beside the dash bar) */
+  .vis h4 { display: none; }
+  .tools { flex-wrap: wrap; row-gap: 2px; margin-top: 6px; padding-top: 6px; }
+  #h-surf { flex-basis: 100%; white-space: nowrap; }
 }
 @media (max-height: 520px) and (pointer: coarse) {
   .vis {
@@ -640,7 +648,7 @@ b, .num { font-variant-numeric: tabular-nums; }
 }
 @media (max-width: 760px) {
   .toasts {
-    top: calc(124px + var(--sa-t));
+    top: calc(var(--tbh, calc(110px + var(--sa-t))) + 14px);
     left: calc(12px + var(--sa-l));
     transform: none;
     align-items: flex-start;
@@ -1676,7 +1684,7 @@ input[type=range] {
     </div>
   </div>
 </div>
-<div class="toasts" id="toasts"></div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 <div class="redflash" id="redflash"></div>
 
 <div class="overlay" id="title">
