@@ -1,0 +1,17 @@
+{
+  "game": "topkapi-gecesi",
+  "recorded": "2026-11-09T22:49:12.864Z",
+  "commit": "a2ccdf2",
+  "entrySha": "13dd422eb85d",
+  "run": "() => window.topkapiSim(1500)",
+  "metrics": {
+    "missions": 9,
+    "stars": 27,
+    "missionTime": 418.8,
+    "alerts": 0,
+    "caught": 0,
+    "tries": 9,
+    "done": true,
+    "gameErrors": 0
+  }
+}
