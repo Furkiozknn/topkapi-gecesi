@@ -1878,13 +1878,21 @@ const lerp = (a, b, t) => a + (b - a) * t;
 function angDiff(a, b) { let d = (b - a) % TAU; if (d > Math.PI) d -= TAU; else if (d < -Math.PI) d += TAU; return d; }
 function rnd(o) { let s = o.seed >>> 0; s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; o.seed = s || 7; return (s >>> 0) / 4294967296; }
 
-// guard types: walk/run speed (m/s), half field of view (deg), sight range in deep shadow / in full light (m)
-const GT = {
-  halb: { speed: 1.35, run: 3.6, fov: 50, near: 2.3, far: 10.5, catch: 1 },
-  eunuch: { speed: 1.25, run: 3.5, fov: 55, near: 2.5, far: 9.5, catch: 1 },
-  cook: { speed: 1.0, run: 3.0, fov: 46, near: 2.0, far: 7.5, catch: 1 },
-  cat: { speed: 0.85, run: 2.0, fov: 70, near: 1.5, far: 5, catch: 0 },
+// guard types: authentic Ottoman titles, walk/run speed (m/s), half FOV (deg), sight range in deep shadow / full light (m)
+const GUARD_TYPES = {
+  halb: { id: 'halb', name: ['Bostancı', 'Bostancı Guard'], label: ['Bostancı', 'Bostancı Guard'], role: ['Bostancı & Yeniçeri', 'Bostancı & Janissary'], speed: 1.35, run: 3.6, fov: 50, near: 2.3, far: 10.5, catch: 1 },
+  bostanci: { id: 'bostanci', name: ['Bostancı', 'Bostancı Guard'], label: ['Bostancı', 'Bostancı Guard'], role: ['Bostancı Muhafızı', 'Bostancı Guard'], speed: 1.35, run: 3.6, fov: 50, near: 2.3, far: 10.5, catch: 1 },
+  yeniceri: { id: 'yeniceri', name: ['Yeniçeri', 'Janissary Guard'], label: ['Yeniçeri', 'Janissary Guard'], role: ['Yeniçeri Muhafızı', 'Janissary Guard'], speed: 1.35, run: 3.6, fov: 50, near: 2.3, far: 10.5, catch: 1 },
+  eunuch: { id: 'eunuch', name: ['Harem Ağası', 'Harem Guard'], label: ['Harem Ağası', 'Harem Guard'], role: ['Darüssaade Ağası', 'Chief Harem Eunuch'], speed: 1.25, run: 3.5, fov: 55, near: 2.5, far: 9.5, catch: 1 },
+  cook: { id: 'cook', name: ['Has Aşçıbaşı', 'Head Palace Cook'], label: ['Has Aşçıbaşı', 'Head Palace Cook'], role: ['Matbah-ı Âmire Aşçısı', 'Imperial Kitchen Cook'], speed: 1.0, run: 3.0, fov: 46, near: 2.0, far: 7.5, catch: 1 },
+  cat: { id: 'cat', name: ['Saray Kedisi', 'Palace Cat'], label: ['Saray Kedisi', 'Palace Cat'], role: ['Saray Kedisi', 'Palace Cat'], speed: 0.85, run: 2.0, fov: 70, near: 1.5, far: 5, catch: 0 },
 };
+// Support array indexing and iterations for GUARD_TYPES[]
+const GUARD_TYPE_LIST = [GUARD_TYPES.halb, GUARD_TYPES.bostanci, GUARD_TYPES.yeniceri, GUARD_TYPES.eunuch, GUARD_TYPES.cook, GUARD_TYPES.cat];
+GUARD_TYPE_LIST.forEach((gt, idx) => { GUARD_TYPES[idx] = gt; });
+GUARD_TYPES.length = GUARD_TYPE_LIST.length;
+GUARD_TYPES[Symbol.iterator] = function* () { yield* GUARD_TYPE_LIST; };
+const GT = GUARD_TYPES;
 // Adim Sesi Halkasi (footstep ring): noise radius (m) by gait and surface; wood = creaky boards
 const NOISE = {
   crouch: { stone: 0, marble: 0, carpet: 0, gravel: 1.6, wood: 2.2 },
@@ -1917,9 +1925,9 @@ const MOON = { dx: 0.5, dz: -0.866, elev: 48 }; // direction towards the moon on
 // Mission table: 9 night missions in 3 parts. Waypoints: [col, row, wait s, look deg, face deg (0 east, 90 south)]
 // ---------------------------------------------------------------------------
 const PARTS = [
-  { name: ['Avlular', 'The Courts'] },
-  { name: ['Harem', 'The Harem'] },
-  { name: ['Hazine', 'The Treasury'] },
+  { name: ['Avlular (Orta Kapı)', 'Courtyards (Orta Kapı)'] },
+  { name: ['Harem-i Hümâyûn', 'The Imperial Harem'] },
+  { name: ['Enderûn & Hazine', 'Enderûn & Hazine'] },
 ];
 const TUTORIAL_LEVEL = {
   id: 'talim-avlusu', part: 0, name: ['Talim Avlusu', 'Training Courtyard'], opt: 'ghost', par: 30, limit: 180,
@@ -1927,7 +1935,7 @@ const TUTORIAL_LEVEL = {
     'Saray gecesine adım atmadan önce adımlarını sına. Muhafızlara görünmeden çömel, taşla dikkat dağıt, perdeye gizlen ve kapıya ulaş.',
     'Test your steps before slipping into the palace night. Crouch to silence your steps, distract a guard with a pebble, hide behind curtains and reach the gate.'
   ],
-  clues: [['Talim tam: Çakıl üzerinde sessizce yürü, muhafızı şaşırt ve saklan.', 'Training complete: Move silently over gravel, distract the watcher and hide.']],
+  clues: [['Talim tam: Çakıl üzerinde sessizce yürü, Bostancı muhafızını şaşırt ve saklan.', 'Training complete: Move silently over gravel, distract the Bostancı watcher and hide.']],
   map: [
     '##############################',
     '#T.,,,,,,,,,,,T#T...........T#',
@@ -1947,15 +1955,15 @@ const TUTORIAL_LEVEL = {
     '##############################',
   ],
   guards: [
-    { type: 'halb', route: [[12, 6, 4, 70, 90]] },
-    { type: 'halb', route: [[15, 12, 3, 60], [24, 12, 3, 60]] },
+    { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[12, 6, 4, 70, 90]] },
+    { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[15, 12, 3, 60], [24, 12, 3, 60]] },
   ]
 };
 const LEVELS = [
-  { id: 'orta-kapi', part: 0, name: ['Orta Kapı', 'The Middle Gate'], opt: 'bulb', par: 70, limit: 420,
-    brief: ['Gece yarısı. Hazinedeki Kaşıkçı Elması sahte! Hırsız sarayın içinde. Birinci avludan sessizce geç, ipucunu bul ve Orta Kapı’ya ulaş.',
-      'Midnight. The Spoon-maker’s Diamond in the treasury is a fake! The thief is inside the palace. Slip through the first court, find a clue and reach the Middle Gate.'],
-    clues: [['Yırtık bir kaftan parçası: altın sırma, Enderun işi. Hırsız saraydan biri.', 'A torn kaftan scrap: gold thread, Enderun work. The thief is one of us.']],
+  { id: 'orta-kapi', part: 0, name: ['Orta Kapı', 'Orta Kapı (Middle Gate)'], opt: 'bulb', par: 70, limit: 420,
+    brief: ['Gece yarısı. Hazine-i Âmire’deki Kaşıkçı Elması sahte! Hırsız sarayın içinde. Alay Meydanı’ndan sessizce geç, ipucunu bul ve Bostancı nöbetçilerini aşarak Orta Kapı’ya ulaş.',
+      'Midnight. The Spoon-maker’s Diamond in the Imperial Treasury is a fake! The thief is inside the palace. Slip through the first court, find a clue and reach Orta Kapı.'],
+    clues: [['Yırtık bir kaftan parçası: altın sırma, Enderûn işi. Hırsız saraydan biri.', 'A torn kaftan scrap: gold thread, Enderûn work. The thief is one of us.']],
     map: [
       '##############################',
       '#T.,,,,,,,,,,,T#T...........T#',
@@ -1975,15 +1983,15 @@ const LEVELS = [
       '##############################',
     ],
     guards: [
-      { type: 'halb', route: [[13, 6, 2, 60], [3, 6, 1, 50], [3, 1, 1, 50], [13, 1, 2, 60]] },
-      { type: 'halb', route: [[18, 2, 2, 60], [25, 2, 1], [25, 6, 2, 60], [18, 6, 1]] },
-      { type: 'halb', route: [[12, 9, 2, 60], [21, 9, 0], [21, 13, 2, 60], [12, 13, 0]] },
-      { type: 'halb', route: [[24, 9, 3, 70, 90], [24, 13, 3, 70, 270]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[13, 6, 2, 60], [3, 6, 1, 50], [3, 1, 1, 50], [13, 1, 2, 60]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[18, 2, 2, 60], [25, 2, 1], [25, 6, 2, 60], [18, 6, 1]] },
+      { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[12, 9, 2, 60], [21, 9, 0], [21, 13, 2, 60], [12, 13, 0]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[24, 9, 3, 70, 90], [24, 13, 3, 70, 270]] },
     ] },
-  { id: 'mutfaklar', part: 0, name: ['Has Mutfaklar', 'The Palace Kitchens'], opt: 'letter', par: 130, limit: 420,
-    brief: ['Hırsızın izi mutfaklara çıkıyor. Aşçıbaşı ocak başında, kedisi her yerde. Kilerdeki ipucunu al, avlu kapısından çık.',
-      'The trail leads to the kitchens. The head cook tends the hearths and his cat is everywhere. Take the clue from the pantry and leave by the yard gate.'],
-    clues: [['Mumdan bir anahtar kalıbı: hazinenin kilidi! Hırsız bir kopya yaptırmış.', 'A wax mould of a key: the treasury lock! The thief had a copy made.']],
+  { id: 'mutfaklar', part: 0, name: ['Matbah-ı Âmire', 'Matbah-ı Âmire (Palace Kitchens)'], opt: 'letter', par: 130, limit: 420,
+    brief: ['Hırsızın izi Matbah-ı Âmire’ye (Has Mutfaklar) çıkıyor. Aşçıbaşı ocak başında, kedisi her yerde. Kilerdeki ipucunu al, Bostancı nöbetini atlatıp kapıdan çık.',
+      'The trail leads to the Matbah-ı Âmire (Palace Kitchens). The head cook tends the hearths and his cat is everywhere. Take the clue from the pantry and slip past the Bostancı guards.'],
+    clues: [['Mumdan bir anahtar kalıbı: Hazine-i Âmire’nin kilidi! Hırsız bir kopya yaptırmış.', 'A wax mould of a key: the Imperial Treasury (Hazine) lock! The thief had a copy made.']],
     letter: ['Mektup: “Ustaya söyle, cam taş perşembeye hazır olsun.”', 'Letter: “Tell the master the glass stone must be ready by Thursday.”'],
     map: [
       '##m##m##m##m##m##m##m#########',
@@ -2004,14 +2012,14 @@ const LEVELS = [
       '##############################',
     ],
     guards: [
-      { type: 'cook', route: [[2, 4, 3, 70], [18, 4, 2, 60], [18, 2, 3, 70], [2, 2, 2, 60]] },
-      { type: 'cat', route: [[5, 8, 2, 60], [15, 10, 0], [19, 8, 2, 60], [12, 7, 0], [12, 4, 3, 80], [12, 7, 0]] },
-      { type: 'halb', route: [[2, 10, 2, 60], [22, 10, 2, 60]] },
-      { type: 'halb', route: [[21, 13, 3, 70, 180], [21, 8, 3, 70, 270]] },
+      { type: 'cook', role: 'cook', label: ['Has Aşçıbaşı', 'Head Palace Cook'], route: [[2, 4, 3, 70], [18, 4, 2, 60], [18, 2, 3, 70], [2, 2, 2, 60]] },
+      { type: 'cat', role: 'cat', label: ['Saray Kedisi', 'Palace Cat'], route: [[5, 8, 2, 60], [15, 10, 0], [19, 8, 2, 60], [12, 7, 0], [12, 4, 3, 80], [12, 7, 0]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[2, 10, 2, 60], [22, 10, 2, 60]] },
+      { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[21, 13, 3, 70, 180], [21, 8, 3, 70, 270]] },
     ] },
-  { id: 'divan', part: 0, name: ['Divan Meydanı', 'The Divan Square'], opt: 'ghost', par: 70, limit: 420,
-    brief: ['İkinci avlu: selviler, havuzlar ve Divan. Teberdarlar çakıl yollarda nöbette. Nöbet çizelgesini oku ve Babüssaade’ye geç.',
-      'The second court: cypresses, pools and the Divan. Halberdiers walk the gravel paths. Read the watch roster and pass the Gate of Felicity.'],
+  { id: 'divan', part: 0, name: ['Dîvân Meydanı', 'Dîvân Meydanı (Second Court)'], opt: 'ghost', par: 70, limit: 420,
+    brief: ['İkinci avlu: selviler, havuzlar ve Dîvân-ı Hümâyûn. Yeniçeri ve Bostancı muhafızları çakıl yollarda nöbette. Nöbet çizelgesini oku ve Bâbüssaâde’ye geç.',
+      'The second court: cypresses, pools and the Dîvân. Janissary (Yeniçeri) and Bostancı guards patrol the gravel paths. Read the watch roster and pass Bâbüssaâde (Gate of Felicity).'],
     clues: [['Nöbet çizelgesi: bu gece Harem kapısında “iç oğlanı Rüstem” yazıyor. Rüstem diye biri yok!', 'The watch roster: tonight the Harem door lists “page Rüstem”. There is no page called Rüstem!']],
     map: [
       '##############################',
@@ -2034,16 +2042,16 @@ const LEVELS = [
       '##############################',
     ],
     guards: [
-      { type: 'halb', route: [[14, 15, 2, 60], [14, 2, 3, 70]] },
-      { type: 'halb', route: [[1, 6, 1, 60], [28, 6, 1, 60]] },
-      { type: 'halb', route: [[16, 3, 2, 60], [16, 5, 0], [28, 5, 2, 60], [28, 2, 1]] },
-      { type: 'halb', route: [[11, 2, 4, 70, 90]] },
-      { type: 'halb', route: [[27, 12, 2, 60], [2, 12, 2, 60]] },
-      { type: 'halb', route: [[8, 2, 2, 60], [8, 15, 2, 60]] },
+      { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[14, 15, 2, 60], [14, 2, 3, 70]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[1, 6, 1, 60], [28, 6, 1, 60]] },
+      { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[16, 3, 2, 60], [16, 5, 0], [28, 5, 2, 60], [28, 2, 1]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[11, 2, 4, 70, 90]] },
+      { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[27, 12, 2, 60], [2, 12, 2, 60]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[8, 2, 2, 60], [8, 15, 2, 60]] },
     ] },
-  { id: 'taslik', part: 1, name: ['Cariyeler Taşlığı', 'The Consorts’ Courtyard'], opt: 'bulb', par: 80, limit: 420,
-    brief: ['Harem’e girdin. Taşlık revakları sessiz, ama harem ağaları uyumuyor. Odalardan birinde hırsızın izini bul.',
-      'You are in the Harem. The courtyard colonnade is quiet, but the harem guards are awake. Find the thief’s trace in one of the rooms.'],
+  { id: 'taslik', part: 1, name: ['Cariyeler Taşlığı', 'Cariyeler Taşlığı (Courtyard of the Consorts)'], opt: 'bulb', par: 80, limit: 420,
+    brief: ['Harem-i Hümâyûn’a girdin. Taşlık revakları sessiz, ama Harem Ağaları devriyede. Odalardan birinde hırsızın izini bul.',
+      'Inside the Imperial Harem. The courtyard colonnade is silent, but the Harem Guards (Ağas) are awake. Find the thief’s trail in one of the chambers.'],
     clues: [['Kına kokan bir mendil ve bir not: “Altın Yol’un sonunda buluşalım.”', 'A handkerchief that smells of henna and a note: “Meet me at the end of the Golden Road.”']],
     map: [
       '##############################',
@@ -2064,15 +2072,15 @@ const LEVELS = [
       '##############################',
     ],
     guards: [
-      { type: 'eunuch', route: [[1, 6, 2, 60], [28, 6, 2, 60]] },
-      { type: 'eunuch', route: [[28, 10, 2, 60], [1, 10, 2, 60]] },
-      { type: 'eunuch', route: [[15, 6, 1], [15, 3, 3, 70], [15, 6, 0], [21, 6, 1], [21, 2, 3, 70], [21, 6, 0]] },
-      { type: 'cat', route: [[9, 14, 2, 60], [13, 12, 2, 60], [12, 10, 1], [7, 8, 2, 60], [12, 10, 0]] },
-      { type: 'eunuch', route: [[8, 6, 1, 50], [8, 10, 1, 50], [23, 10, 1, 50], [23, 6, 1, 50]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[1, 6, 2, 60], [28, 6, 2, 60]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[28, 10, 2, 60], [1, 10, 2, 60]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[15, 6, 1], [15, 3, 3, 70], [15, 6, 0], [21, 6, 1], [21, 2, 3, 70], [21, 6, 0]] },
+      { type: 'cat', role: 'cat', label: ['Saray Kedisi', 'Palace Cat'], route: [[9, 14, 2, 60], [13, 12, 2, 60], [12, 10, 1], [7, 8, 2, 60], [12, 10, 0]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[8, 6, 1, 50], [8, 10, 1, 50], [23, 10, 1, 50], [23, 6, 1, 50]] },
     ] },
-  { id: 'altin-yol', part: 1, name: ['Altın Yol', 'The Golden Road'], opt: 'ghost', par: 120, limit: 420,
-    brief: ['Harem’in omurgası: kandillerle aydınlanan uzun Altın Yol. Perdelerin arkasına saklan, ağaların adımlarını say.',
-      'The spine of the Harem: the long, lamp-lit Golden Road. Hide behind the curtains and count the guards’ steps.'],
+  { id: 'altin-yol', part: 1, name: ['Altın Yol', 'Altın Yol (The Golden Road)'], opt: 'ghost', par: 120, limit: 420,
+    brief: ['Harem-i Hümâyûn’un omurgası: kandillerle aydınlanan uzun Altın Yol. Perdelerin arkasına saklan, Harem Ağaları’nın adımlarını say.',
+      'The spine of the Harem: the long, lamp-lit Golden Road (Altın Yol). Hide behind curtains and count the Harem Guards’ steps.'],
     clues: [['Mektup: “Taşı Bağdat Köşkü’ndeki sandığa koydum. Sahtesini cam ustası yaptı.”', 'Letter: “I put the stone in the chest in the Baghdad Kiosk. The glass master made the fake.”']],
     map: [
       '##############################',
@@ -2087,14 +2095,14 @@ const LEVELS = [
       '##############################',
     ],
     guards: [
-      { type: 'eunuch', route: [[15, 2, 2, 60], [4, 2, 2, 60]] },
-      { type: 'eunuch', route: [[27, 4, 2, 60], [14, 3, 2, 60]] },
-      { type: 'eunuch', route: [[9, 6, 2, 60], [12, 8, 2, 60]] },
-      { type: 'cat', route: [[10, 2, 3, 60], [20, 3, 3, 60]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[15, 2, 2, 60], [4, 2, 2, 60]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[27, 4, 2, 60], [14, 3, 2, 60]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[9, 6, 2, 60], [12, 8, 2, 60]] },
+      { type: 'cat', role: 'cat', label: ['Saray Kedisi', 'Palace Cat'], route: [[10, 2, 3, 60], [20, 3, 3, 60]] },
     ] },
-  { id: 'hunkar-sofasi', part: 1, name: ['Hünkâr Sofası', 'The Imperial Hall'], opt: 'letter', par: 90, limit: 420,
-    brief: ['Sarayın en büyük salonu. Mangallar yanıyor, sütunlar gölge veriyor. Taht nişindeki mührü al.',
-      'The palace’s greatest hall. Braziers burn and the columns cast shadows. Take the seal from the throne niche.'],
+  { id: 'hunkar-sofasi', part: 1, name: ['Hünkâr Sofası', 'Hünkâr Sofası (Imperial Hall)'], opt: 'letter', par: 90, limit: 420,
+    brief: ['Sarayın en görkemli taht salonu: Hünkâr Sofası. Mangallar yanıyor, sütunlar gölge veriyor. Bostancı ve Harem muhafızlarını atlatıp taht nişindeki mührü al.',
+      'The palace’s grandest throne room: Hünkâr Sofası. Braziers burn and columns cast shadows. Evade the Bostancı and Harem guards to take the seal from the throne niche.'],
     clues: [['Cam ustasının mührü: “Usta Yorgi, Galata”. Sahte elmas buradan çıkmış.', 'The glass master’s seal: “Master Yorgi, Galata”. The fake came from him.']],
     letter: ['Mektup: “Elması gün doğmadan yerine koyan, padişahın gözdesi olur.”', 'Letter: “Whoever returns the diamond before dawn will win the Sultan’s favour.”'],
     map: [
@@ -2117,16 +2125,16 @@ const LEVELS = [
       '##############################',
     ],
     guards: [
-      { type: 'eunuch', route: [[6, 5, 1, 50], [23, 5, 1, 50], [23, 13, 1, 50], [6, 13, 1, 50]] },
-      { type: 'eunuch', route: [[19, 11, 2, 60], [10, 11, 0], [10, 7, 2, 60], [19, 7, 0]] },
-      { type: 'halb', route: [[14, 3, 3, 70, 90], [8, 3, 2, 60], [14, 3, 3, 70, 90], [20, 3, 2, 60]] },
-      { type: 'eunuch', route: [[25, 13, 2, 60], [4, 13, 2, 60]] },
-      { type: 'halb', route: [[27, 2, 3, 70, 180], [21, 2, 2, 60]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[6, 5, 1, 50], [23, 5, 1, 50], [23, 13, 1, 50], [6, 13, 1, 50]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[19, 11, 2, 60], [10, 11, 0], [10, 7, 2, 60], [19, 7, 0]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[14, 3, 3, 70, 90], [8, 3, 2, 60], [14, 3, 3, 70, 90], [20, 3, 2, 60]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[25, 13, 2, 60], [4, 13, 2, 60]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[27, 2, 3, 70, 180], [21, 2, 2, 60]] },
     ] },
-  { id: 'enderun', part: 2, name: ['Enderun Avlusu', 'The Enderun Court'], opt: 'bulb', par: 75, limit: 420,
-    brief: ['Üçüncü avlu: kütüphane köşkü, selviler ve Enderun koğuşları. Hazine kapısına giden yolu öğren.',
-      'The third court: the library kiosk, cypresses and the Enderun dormitories. Learn the way to the treasury door.'],
-    clues: [['Kütüphanecinin notu: “Hazine anahtarı muhafız odasında, kancada asılı.”', 'The librarian’s note: “The treasury key hangs on a hook in the guardroom.”']],
+  { id: 'enderun', part: 2, name: ['Enderûn Avlusu', 'Enderûn Courtyard (Third Court)'], opt: 'bulb', par: 75, limit: 420,
+    brief: ['Üçüncü avlu: kütüphane köşkü, selviler ve Enderûn koğuşları. Yeniçeri ve Bostancı nöbetçilerini aşarak Hazine kapısına giden yolu öğren.',
+      'The third court: library kiosk, cypresses and Enderûn dormitories. Slip past the Janissary (Yeniçeri) and Bostancı watchers to discover the path to the Hazine door.'],
+    clues: [['Kütüphanecinin notu: “Hazine-i Âmire anahtarı muhafız odasında, kancada asılı.”', 'The librarian’s note: “The Hazine key hangs on a hook in the guardroom.”']],
     map: [
       '##############################',
       '#T..T..T..T..T..T..T..T..T..T#',
@@ -2147,17 +2155,17 @@ const LEVELS = [
       '##############################',
     ],
     guards: [
-      { type: 'halb', route: [[2, 13, 2, 60], [27, 13, 2, 60]] },
-      { type: 'halb', route: [[27, 15, 1, 50], [5, 15, 1, 50]] },
-      { type: 'halb', route: [[11, 3, 1, 50], [18, 3, 1, 50], [18, 9, 1, 50], [11, 9, 1, 50]] },
-      { type: 'halb', route: [[2, 2, 3, 70], [27, 2, 3, 70]] },
-      { type: 'halb', route: [[26, 11, 4, 80, 90]] },
-      { type: 'halb', route: [[2, 11, 2, 60], [2, 4, 2, 60]] },
+      { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[2, 13, 2, 60], [27, 13, 2, 60]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[27, 15, 1, 50], [5, 15, 1, 50]] },
+      { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[11, 3, 1, 50], [18, 3, 1, 50], [18, 9, 1, 50], [11, 9, 1, 50]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[2, 2, 3, 70], [27, 2, 3, 70]] },
+      { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[26, 11, 4, 80, 90]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[2, 11, 2, 60], [2, 4, 2, 60]] },
     ] },
-  { id: 'bagdat-kosku', part: 2, name: ['Bağdat Köşkü', 'The Baghdad Kiosk'], opt: 'ghost', par: 95, limit: 420,
-    brief: ['Boğaz’a bakan mermer teras. Gerçek elmas köşkteki sandıkta. Al ve teras kapısından çık.',
-      'The marble terrace above the Bosphorus. The real diamond is in the chest inside the kiosk. Take it and leave by the terrace door.'],
-    clues: [['Kaşıkçı Elması! Ay ışığında seksen altı kırat parıltı. Şimdi hazineye.', 'The Spoon-maker’s Diamond! Eighty-six carats glittering in the moonlight. Now, to the treasury.']],
+  { id: 'bagdat-kosku', part: 2, name: ['Bağdat Köşkü', 'Bağdat Köşkü (Baghdad Kiosk)'], opt: 'ghost', par: 95, limit: 420,
+    brief: ['Boğaz’a bakan mermer teras: IV. Murad’ın Bağdat Köşkü. Gerçek elmas köşkteki sandıkta. Bostancı muhafızlarına yakalanmadan al ve Hazine’ye yönel.',
+      'The marble terrace overlooking the Bosphorus: Baghdad Kiosk. The real diamond is in the chest. Evade the Bostancı patrols, take the stone and head for the Hazine.'],
+    clues: [['Kaşıkçı Elması! Ay ışığında seksen altı kırat parıltı. Şimdi Hazine-i Âmire’ye.', 'The Spoon-maker’s Diamond! Eighty-six carats glittering in the moonlight. Now, to the Hazine (Treasury).']],
     map: [
       '##############################',
       '#X=====T=====T======T=====T==#',
@@ -2176,16 +2184,16 @@ const LEVELS = [
       '##############################',
     ],
     guards: [
-      { type: 'halb', route: [[1, 8, 2, 60], [28, 8, 2, 60]] },
-      { type: 'halb', route: [[2, 2, 1, 50], [13, 2, 1, 50], [13, 6, 1, 50], [2, 6, 1, 50]] },
-      { type: 'eunuch', route: [[23, 3, 3, 70], [24, 8, 0], [15, 8, 2, 60], [24, 8, 0]] },
-      { type: 'cat', route: [[5, 12, 2, 60], [20, 10, 2, 60]] },
-      { type: 'halb', route: [[27, 12, 1, 50], [4, 12, 1, 50]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[1, 8, 2, 60], [28, 8, 2, 60]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[2, 2, 1, 50], [13, 2, 1, 50], [13, 6, 1, 50], [2, 6, 1, 50]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[23, 3, 3, 70], [24, 8, 0], [15, 8, 2, 60], [24, 8, 0]] },
+      { type: 'cat', role: 'cat', label: ['Saray Kedisi', 'Palace Cat'], route: [[5, 12, 2, 60], [20, 10, 2, 60]] },
+      { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[27, 12, 1, 50], [4, 12, 1, 50]] },
     ] },
-  { id: 'hazine', part: 2, name: ['Hazine Koğuşu', 'The Treasury'], opt: 'letter', par: 150, limit: 420,
-    brief: ['Son gece işi: muhafız odasından anahtarı al, dördüncü odadaki kaideye gerçek elması koy. Şafak yaklaşıyor.',
-      'The last job: take the key from the guardroom and set the real diamond on the pedestal in the fourth vault. Dawn is near.'],
-    clues: [['Hazine anahtarı. Soğuk ve ağır. Kaideye giden kapılar artık açık.', 'The treasury key. Cold and heavy. The doors to the pedestal are open now.']],
+  { id: 'hazine', part: 2, name: ['Hazine-i Âmire', 'Hazine-i Âmire (The Treasury)'], opt: 'letter', par: 150, limit: 420,
+    brief: ['Son gece işi: Hazine-i Âmire muhafız odasından anahtarı al, dördüncü kubbedeki kaideye gerçek elması koy. Şafak yaklaşıyor.',
+      'The final nocturnal errand: take the key from the guardroom and place the authentic Spoon-maker’s Diamond back in the fourth vault of Hazine-i Âmire before dawn.'],
+    clues: [['Hazine anahtarı. Soğuk ve ağır. Kaideye giden kapılar artık açık.', 'The Hazine key. Cold and heavy. The doors to the pedestal are open now.']],
     letter: ['Hazinedarın defteri: “Elmas, kaşıkçının bulduğu taş; bir kaşığa değişilmiş.”', 'The treasurer’s ledger: “The diamond was found by a spoon-maker, who traded it for three spoons.”'],
     map: [
       '##############################',
@@ -2206,13 +2214,15 @@ const LEVELS = [
       '##############################',
     ],
     guards: [
-      { type: 'halb', route: [[3, 12, 2, 60], [11, 12, 2, 60]] },
-      { type: 'halb', route: [[2, 7, 1, 50], [27, 7, 1, 50], [27, 9, 1, 50], [2, 9, 1, 50]] },
-      { type: 'halb', route: [[15, 11, 2, 60], [24, 14, 2, 60]] },
-      { type: 'eunuch', route: [[24, 2, 3, 70], [25, 7, 2, 60], [14, 7, 2, 60], [25, 7, 0]] },
-      { type: 'halb', route: [[11, 3, 2, 60], [11, 8, 1], [17, 8, 1], [17, 3, 2, 60], [17, 8, 0], [11, 8, 0]] },
+      { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[3, 12, 2, 60], [11, 12, 2, 60]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[2, 7, 1, 50], [27, 7, 1, 50], [27, 9, 1, 50], [2, 9, 1, 50]] },
+      { type: 'halb', role: 'yeniceri', label: ['Yeniçeri', 'Janissary Guard'], route: [[15, 11, 2, 60], [24, 14, 2, 60]] },
+      { type: 'eunuch', role: 'eunuch', label: ['Harem Ağası', 'Harem Guard'], route: [[24, 2, 3, 70], [25, 7, 2, 60], [14, 7, 2, 60], [25, 7, 0]] },
+      { type: 'halb', role: 'bostanci', label: ['Bostancı', 'Bostancı Guard'], route: [[11, 3, 2, 60], [11, 8, 1], [17, 8, 1], [17, 3, 2, 60], [17, 8, 0], [11, 8, 0]] },
     ] },
 ];
+// Authentic Ottoman mission aliases
+const MISSIONS = LEVELS;
 
 // ---------------------------------------------------------------------------
 // Level parsing, light, line of sight
@@ -2352,7 +2362,7 @@ function makeGuard(L, G, k) {
     for (let q = 1; q < p.length - 1; q++) pts.push({ x: ccx(L, p[q]), z: ccz(L, p[q]), w: 0, look: 0, face: null, wp: -1 });
   }
   const p0 = pts[0], p1 = pts[1] || p0;
-  return { k, type: G.type, x: p0.x, z: p0.z, h: p0.face != null ? p0.face : Math.atan2(p1.z - p0.z, p1.x - p0.x) || 0, loop: pts, li: 0, wt: p0.w > 0 ? 0 : -1, wBase: p0.face != null ? p0.face : Math.atan2(p1.z - p0.z, p1.x - p0.x) || 0,
+  return { k, type: G.type, role: G.role || G.type, label: G.label || (GT[G.role] && GT[G.role].label) || (GT[G.type] && GT[G.type].label) || ['Bostancı', 'Bostancı Guard'], x: p0.x, z: p0.z, h: p0.face != null ? p0.face : Math.atan2(p1.z - p0.z, p1.x - p0.x) || 0, loop: pts, li: 0, wt: p0.w > 0 ? 0 : -1, wBase: p0.face != null ? p0.face : Math.atan2(p1.z - p0.z, p1.x - p0.x) || 0,
     state: 'patrol', sus: 0, phase: '', pt: 0, tx: 0, tz: 0, path: null, pi: 0, repath: 0, lostT: 0, lsx: 0, lsz: 0, seenT: -99, sawHide: -1, searchN: 0, meowT: -99, relightK: -1, seed: 1234567 + k * 7919, moving: false, see: 0 };
 }
 function newSim(idx, opts = {}) {
@@ -2843,7 +2853,7 @@ function botInput(S, B) {
   return I;
 }
 
-return { CELL, DT, TILE, GT, NOISE, stepNoise, hears, damping, SPEED, LEVELS, TUTORIAL_LEVEL, PARTS, MOON, LIGHT, parse, newSim, step, clone, focus, lightAt, cellAt, ccx, ccz, los, plan, predict, makeBot, botInput, result, angDiff, clamp, lerp, PSTEP };
+return { CELL, DT, TILE, GT, GUARD_TYPES, MISSIONS, NOISE, stepNoise, hears, damping, SPEED, LEVELS, TUTORIAL_LEVEL, PARTS, MOON, LIGHT, parse, newSim, step, clone, focus, lightAt, cellAt, ccx, ccz, los, plan, predict, makeBot, botInput, result, angDiff, clamp, lerp, PSTEP };
 })();
 if (typeof module !== 'undefined') module.exports = CORE;
 </script>
@@ -2851,6 +2861,8 @@ if (typeof module !== 'undefined') module.exports = CORE;
 import * as THREE from 'three';
 
 const C = CORE;
+window.MISSIONS = C.MISSIONS;
+window.GUARD_TYPES = C.GUARD_TYPES;
 const { CELL, clamp, lerp } = C;
 // gold filigree for the lacquer panels: authentic Ottoman Tezhip corner flourishes
 (function filigree() {
@@ -2927,42 +2939,44 @@ const unlocked = i => (i === -1 ? true : (i === 0 ? (!!PROG.tutDone || (PROG.don
 const I18N = {
   tr: {
     subtitle: 'Gece yarısı sarayda gizli bir görev', play: 'Oyna', cont: 'Devam Et: {m}', settings: 'Ayarlar', palaceMap: 'Saray Haritası',
-    howto: 'Kaşıkçı Elması çalındı, yerinde sahtesi var. Genç bir iç oğlanı olarak muhafızlara görünmeden ipuçlarını topla ve gerçek elması şafaktan önce yerine koy. Gölgede kal, fenerleri söndür, perdelere saklan; adımlarının ses halkasına dikkat et.',
+    howto: 'Kaşıkçı Elması çalındı, yerinde sahtesi var. Genç bir iç oğlanı olarak Bostancı ve Yeniçeri muhafızlarına görünmeden ipuçlarını topla ve gerçek elması şafaktan önce Enderûn Hazine-i Âmire kaidesine koy. Gölgede kal, fenerleri söndür, perdelere saklan; adımlarının ses halkasına dikkat et.',
     mission: 'Görev', toDawn: 'Şafağa', pauseBtn: 'Duraklat (P)', soundBtn: 'Ses (M müzik, X efekt)', langBtn: 'Dil (L)', objectives: 'Görevler', visibility: 'Görünürlük',
     crouchS: 'Çömel', throwS: 'Taş', useS: 'Kullan', runS: 'Koş', dashS: 'Atıl', pauseS: 'Dur',
     paused: 'Duraklatıldı', resume: 'Devam', restart: 'Görevi Baştan Al', mainMenu: 'Ana Menü', master: 'Ana ses', music: 'Müzik', effects: 'Efektler',
     language: 'Dil', quality: 'Kalite', low: 'Düşük', high: 'Yüksek', fullscreen: 'Tam ekran', toggle: 'Aç / kapat', back: 'Geri', retry: 'Tekrar',
     next: 'Sonraki Görev', toEnding: 'Şafak', start: 'Göreve Başla', locked: 'Kilitli: önceki görevi bitir', par: 'Hedef süre: {s}', bestStars: 'En iyi',
-    part: 'Bölüm {n}: {p}', guardsN: '{n} nöbetçi', pebblesN: '3 çakıl taşı',
+    part: 'Bölüm {n}: {p}', guardsN: '{n} muhafız', pebblesN: '3 çakıl taşı',
+    guard_bostanci: 'Bostancı', guard_yeniceri: 'Yeniçeri', guard_eunuch: 'Harem Ağası', guard_cook: 'Has Aşçıbaşı', guard_cat: 'Saray Kedisi', guard_halb: 'Bostancı',
     opt_bulb: 'Kayıp lale soğanını bul', opt_letter: 'Gizli mektubu oku', opt_ghost: 'Hayalet ol: kimse şüphelenmesin',
-    obj_clue: 'İpucunu bul', obj_diamond: 'Gerçek elması al', obj_key: 'Hazine anahtarını al', obj_exit: 'Çıkışa ulaş', obj_place: 'Elması kaideye koy',
+    obj_clue: 'İpucunu bul', obj_diamond: 'Kaşıkçı Elması’nı al', obj_key: 'Hazine-i Âmire anahtarını al', obj_exit: 'Çıkışa ulaş', obj_place: 'Kaşıkçı Elması’nı Hazine kaidesine koy',
     star_unseen: 'Görünmeden: hiç alarm yok', star_time: 'Hızlı: {s} içinde', optional: 'İsteğe bağlı',
     vis_hidden: 'Saklandın', vis_dark: 'Gölgede', vis_dim: 'Loş', vis_lit: 'Işıkta', gait_idle: 'duruyor', gait_crouch: 'çömelmiş', gait_walk: 'yürüyor', gait_run: 'koşuyor',
     surf_stone: 'taş', surf_gravel: 'çakıl!', surf_carpet: 'halı', surf_marble: 'mermer', surf_wood: 'gıcırtılı tahta!',
     ring_m: 'ses {r} m', ring_silent: 'sessiz', ringHint: 'Adım Sesi Halkası: her adımın sesi bir halka gibi yayılır. Koşmak, mermer, çakıl ve gıcırtılı tahta halkayı büyütür; çömelmek ve halı küçültür, duvarlar keser. Halkanın içindeki muhafız sese gelir.',
     pr_clue: 'İpucunu al', pr_bulb: 'Lale soğanını al', pr_letter: 'Mektubu oku', pr_curtain: 'Perdenin arkasına saklan', pr_chest: 'Sandığa saklan', pr_unhide: 'Çık',
-    pr_snuff: 'Feneri söndür', pr_place: 'Gerçek elması kaideye koy',
+    pr_snuff: 'Feneri söndür', pr_place: 'Kaşıkçı Elması’nı Hazine kaidesine koy',
     sus: ['Hm? Bir ses mi?', 'Orada biri mi var?', 'Rüzgâr mı acaba?', 'Kim o?'], susCook: ['Kedi, sen misin?', 'Kim karıştırıyor tencereleri?'],
-    alert: ['Kim var orada?!', 'Dur! Kımıldama!', 'Hırsız!'], call: 'Muhafızlar, buraya!', meow: 'Kedi miyavladı! Muhafızlar duyabilir', caught: 'Yakalandın! Sessiz çeşmeye dönüyorsun',
-    cp: 'Sessiz çeşme: kayıt noktası', need: 'Önce ipucunu bul', needKey: 'Önce hazine anahtarını bul', snuff: 'Fener söndü', relight: 'Bir muhafız feneri yeniden yaktı',
+    alert: ['Kim var orada?!', 'Dur! Kımıldama!', 'Hırsız!'], call: 'Bostancılar, Yeniçeriler, buraya!', meow: 'Kedi miyavladı! Muhafızlar duyabilir', caught: 'Yakalandın! Sessiz çeşmeye dönüyorsun',
+    caughtWho: '{g} yakaladı! Sessiz çeşmeye dönüyorsun',
+    cp: 'Sessiz çeşme: kayıt noktası', need: 'Önce ipucunu bul', needKey: 'Önce Hazine-i Âmire anahtarını bul', snuff: 'Fener söndü', relight: 'Bir muhafız feneri yeniden yaktı',
     vase: 'Vazo devrildi! Herkes duydu', hidden: 'Saklandın: kimse göremez', hideSeen: 'Saklandığını gördüler!', noPeb: 'Çakıl taşı kalmadı', landed: 'Çakıl düştü: muhafızlar sese bakacak',
     pickBulb: 'Kayıp lale soğanı bulundu', pickLetter: 'Gizli mektup', clueN: 'İpucu', dawnFail: 'Şafak söktü!', lostSearch: 'Muhafız aramayı bıraktı',
     res_ok: 'Görev tamam', res_fail: 'Şafak söktü', res_failSub: 'Ezan okunmadan bitirmelisin. Bir daha dene.', res_okSub: '{m} · {t}',
     kv_time: 'Süre', kv_alerts: 'Alarm', kv_caught: 'Yakalanma', kv_stars: 'Yıldız', newRecord: 'Yeni rekor!', total: 'Toplam yıldız',
     bestLine: 'En iyi: {s}/27 yıldız · {n}/9 görev', bestNone: 'Henüz görev yok', musicOn: 'Müzik açık', musicOff: 'Müzik kapalı', sfxOn: 'Efektler açık', sfxOff: 'Efektler kapalı',
     soundOn: 'Ses açık', soundOff: 'Ses kapalı', loading: 'Yükleniyor… {n}/{m}',
-    endTitle: 'Boğaz’da şafak', endText: 'Kaşıkçı Elması yerinde parlıyor, sahtesi Boğaz’ın sularında. Sabah ezanı okunurken genç iç oğlanı Sofa Köşkü’nden doğan güneşi izliyor. Kimse bir şey görmedi.',
-    playAgain: 'Haritaya Dön', missionsLbl: 'Görev', partNames: ['Avlular', 'Harem', 'Hazine'], intro: '{p}: {m}', seconds: '{s} sn',
+    endTitle: 'Boğaz’da şafak', endText: 'Kaşıkçı Elması Enderûn Hazine-i Âmire kaidesinde parlıyor, sahtesi Boğaz’ın sularında. Sabah ezanı okunurken genç iç oğlanı Sofa Köşkü’nden doğan güneşi izliyor. Kimse bir şey görmedi.',
+    playAgain: 'Haritaya Dön', missionsLbl: 'Görev', partNames: ['Avlular (Orta Kapı)', 'Harem-i Hümâyûn', 'Enderûn & Hazine'], intro: '{p}: {m}', seconds: '{s} sn',
     daily: 'Günün Meydan Okuması', dailyInfo: '(seri {s} · en iyi {b})', dailyDone: '(bugün tamam · seri {s})', dailyIntro: 'Günün Meydan Okuması {d}: {m}',
     dailyRes: 'Günün Meydan Okuması {d}: seri {s} gün · en iyi {b}', dailyFail: 'Günün Meydan Okuması {d}: görev tamamlanınca seri sayılır',
     share: 'Paylaş', another: 'Başka oyun', a11y: 'Erişilebilirlik', a11yOpen: 'Aç',
     shareMission: '{n}. {m}: {st} · {t}', shareDaily: 'Günün Meydan Okuması {d} · seri {k}', shareEnd: '9 görev · {s}/27 yıldız · {t}',
-    awFirst: 'İlk görev tamam', awGhost: 'Üç yıldızlı görev', awAll: 'Elması yerine koydun: 9 görev',
+    awFirst: 'İlk görev tamam', awGhost: 'Üç yıldızlı görev', awAll: 'Elması yerine koydun: Hazine-i Âmire güvende',
     tutName: 'Talim Avlusu', tutPart: 'Eğitim',
     tutDesc: 'Saray gecesine adım atmadan önce adımlarını sına. Muhafızlara görünmeden çömel, taşla dikkat dağıt, perdeye gizlen ve kapıya ulaş.',
     tutStep1: 'Çömelerek çakıl üzerinde sessizce ilerle',
-    tutStep2: 'Geçitteki nöbetçiyi taş atarak uzaklaştır',
-    tutStep3: 'Gelen muhafızdan kaçmak için perdeye veya sandığa saklan',
+    tutStep2: 'Geçitteki Bostancı nöbetçisini taş atarak uzaklaştır',
+    tutStep3: 'Gelen Bostancı muhafızından kaçmak için perdeye veya sandığa saklan',
     tutStep4: 'Harika! Şimdi yakalanmadan çıkış kapısına ulaş',
     tutStep1Key: '[W,A,S,D] Yürü & [C] Çömel', tutStep2Key: '[Q] Taş At', tutStep3Key: '[E] Saklan', tutStep4Key: 'Kapıya Ulaş',
     tutStep1Done: 'Çömelme öğrenildi!', tutStep2Done: 'Taş atma öğrenildi!', tutStep3Done: 'Gizlenme öğrenildi!',
@@ -2971,42 +2985,44 @@ const I18N = {
   },
   en: {
     subtitle: 'A secret errand in the palace at midnight', play: 'Play', cont: 'Continue: {m}', settings: 'Settings', palaceMap: 'Palace Map',
-    howto: 'The Spoon-maker’s Diamond has been swapped for a fake. As a young palace page, gather the clues unseen by the guards and put the real diamond back before dawn. Keep to the shadows, snuff the lanterns, hide behind curtains and mind the ring your footsteps make.',
+    howto: 'The Spoon-maker’s Diamond has been swapped for a fake. As a young palace page, slip past Bostancı and Janissary guards, gather clues across Orta Kapı and Enderûn, and return the true diamond to the Hazine before dawn. Keep to the shadows, snuff the lanterns, hide behind curtains and mind the ring your footsteps make.',
     mission: 'Mission', toDawn: 'Dawn in', pauseBtn: 'Pause (P)', soundBtn: 'Sound (M music, X effects)', langBtn: 'Language (L)', objectives: 'Objectives', visibility: 'Visibility',
     crouchS: 'Crouch', throwS: 'Pebble', useS: 'Use', runS: 'Run', dashS: 'Dash', pauseS: 'Pause',
     paused: 'Paused', resume: 'Resume', restart: 'Restart Mission', mainMenu: 'Main Menu', master: 'Master', music: 'Music', effects: 'Effects',
     language: 'Language', quality: 'Quality', low: 'Low', high: 'High', fullscreen: 'Fullscreen', toggle: 'Toggle', back: 'Back', retry: 'Retry',
     next: 'Next Mission', toEnding: 'Dawn', start: 'Start Mission', locked: 'Locked: finish the previous mission', par: 'Target time: {s}', bestStars: 'Best',
-    part: 'Part {n}: {p}', guardsN: '{n} watchers', pebblesN: '3 pebbles',
+    part: 'Part {n}: {p}', guardsN: '{n} palace guards', pebblesN: '3 pebbles',
+    guard_bostanci: 'Bostancı Guard', guard_yeniceri: 'Janissary Guard', guard_eunuch: 'Harem Guard', guard_cook: 'Head Palace Cook', guard_cat: 'Palace Cat', guard_halb: 'Bostancı Guard',
     opt_bulb: 'Find the lost tulip bulb', opt_letter: 'Read the secret letter', opt_ghost: 'Be a ghost: nobody grows suspicious',
-    obj_clue: 'Find the clue', obj_diamond: 'Take the real diamond', obj_key: 'Take the treasury key', obj_exit: 'Reach the exit', obj_place: 'Set the diamond on the pedestal',
+    obj_clue: 'Find the clue', obj_diamond: 'Take the Spoon-maker’s Diamond', obj_key: 'Take the Hazine key', obj_exit: 'Reach the exit', obj_place: 'Set the Diamond on the Hazine pedestal',
     star_unseen: 'Unseen: no alarm at all', star_time: 'Swift: within {s}', optional: 'Optional',
     vis_hidden: 'Hidden', vis_dark: 'In shadow', vis_dim: 'Dim', vis_lit: 'In the light', gait_idle: 'still', gait_crouch: 'crouching', gait_walk: 'walking', gait_run: 'running',
     surf_stone: 'stone', surf_gravel: 'gravel!', surf_carpet: 'carpet', surf_marble: 'marble', surf_wood: 'creaky boards!',
     ring_m: 'noise {r} m', ring_silent: 'silent', ringHint: 'Footstep Ring: every step spreads its sound as a ring. Running, marble, gravel and creaky boards make it bigger; crouching and carpet make it smaller, and walls block it. A guard inside the ring comes to check.',
     pr_clue: 'Take the clue', pr_bulb: 'Take the tulip bulb', pr_letter: 'Read the letter', pr_curtain: 'Hide behind the curtain', pr_chest: 'Hide in the chest', pr_unhide: 'Come out',
-    pr_snuff: 'Snuff the lantern', pr_place: 'Set the real diamond on the pedestal',
+    pr_snuff: 'Snuff the lantern', pr_place: 'Set the Spoon-maker’s Diamond on the Hazine pedestal',
     sus: ['Hm? Was that a sound?', 'Is someone there?', 'Just the wind?', 'Who is it?'], susCook: ['Cat, is that you?', 'Who is rattling my pots?'],
-    alert: ['Who goes there?!', 'Halt! Don’t move!', 'Thief!'], call: 'Guards, over here!', meow: 'The cat meowed! The guards may hear', caught: 'Caught! Back to the quiet fountain',
-    cp: 'Quiet fountain: checkpoint', need: 'Find the clue first', needKey: 'Find the treasury key first', snuff: 'Lantern out', relight: 'A guard relit a lantern',
+    alert: ['Who goes there?!', 'Halt! Don’t move!', 'Thief!'], call: 'Bostancıs, Janissaries, over here!', meow: 'The cat meowed! The guards may hear', caught: 'Caught! Back to the quiet fountain',
+    caughtWho: 'Caught by {g}! Returning to the quiet fountain',
+    cp: 'Quiet fountain: checkpoint', need: 'Find the clue first', needKey: 'Find the Hazine key first', snuff: 'Lantern out', relight: 'A guard relit a lantern',
     vase: 'A vase fell! Everyone heard it', hidden: 'Hidden: nobody can see you', hideSeen: 'They saw you hide!', noPeb: 'No pebbles left', landed: 'Pebble landed: the guards will check the sound',
     pickBulb: 'Lost tulip bulb found', pickLetter: 'Secret letter', clueN: 'Clue', dawnFail: 'Dawn broke!', lostSearch: 'A guard gave up the search',
     res_ok: 'Mission complete', res_fail: 'Dawn broke', res_failSub: 'You must finish before the morning call. Try again.', res_okSub: '{m} · {t}',
     kv_time: 'Time', kv_alerts: 'Alarms', kv_caught: 'Caught', kv_stars: 'Stars', newRecord: 'New record!', total: 'Total stars',
     bestLine: 'Best: {s}/27 stars · {n}/9 missions', bestNone: 'No mission yet', musicOn: 'Music on', musicOff: 'Music off', sfxOn: 'Effects on', sfxOff: 'Effects off',
     soundOn: 'Sound on', soundOff: 'Sound off', loading: 'Loading… {n}/{m}',
-    endTitle: 'Dawn on the Bosphorus', endText: 'The Spoon-maker’s Diamond shines in its place and the fake lies at the bottom of the Bosphorus. As the morning call rings out, the young page watches the sun rise from the Sofa Kiosk. Nobody saw a thing.',
-    playAgain: 'Back to the Map', missionsLbl: 'Missions', partNames: ['The Courts', 'The Harem', 'The Treasury'], intro: '{p}: {m}', seconds: '{s} s',
+    endTitle: 'Dawn on the Bosphorus', endText: 'The Spoon-maker’s Diamond shines on its Enderûn Hazine pedestal and the fake lies at the bottom of the Bosphorus. As the morning call rings out, the young page watches the sun rise from the Sofa Kiosk. Nobody saw a thing.',
+    playAgain: 'Back to the Map', missionsLbl: 'Missions', partNames: ['Courtyards (Orta Kapı)', 'Imperial Harem', 'Enderûn & Hazine'], intro: '{p}: {m}', seconds: '{s} s',
     daily: 'Daily challenge', dailyInfo: '(streak {s} · best {b})', dailyDone: '(done today · streak {s})', dailyIntro: 'Daily challenge {d}: {m}',
     dailyRes: 'Daily challenge {d}: streak {s} · best {b}', dailyFail: 'Daily challenge {d}: the streak counts once the mission is complete',
     share: 'Share', another: 'Another game', a11y: 'Accessibility', a11yOpen: 'Open',
     shareMission: '{n}. {m}: {st} · {t}', shareDaily: 'Daily challenge {d} · streak {k}', shareEnd: '9 missions · {s}/27 stars · {t}',
-    awFirst: 'First mission complete', awGhost: 'A three-star mission', awAll: 'The diamond is back: 9 missions',
+    awFirst: 'First mission complete', awGhost: 'A three-star mission', awAll: 'The diamond is back: Hazine is secured',
     tutName: 'Training Courtyard', tutPart: 'Tutorial',
     tutDesc: 'Test your steps before slipping into the palace night. Crouch to silence your steps, distract a guard with a pebble, hide behind curtains and reach the gate.',
     tutStep1: 'Crouch to walk silently over gravel',
-    tutStep2: 'Throw a pebble to lure the guard away from the passage',
-    tutStep3: 'Hide behind the curtain or chest from the approaching guard',
+    tutStep2: 'Throw a pebble to lure the Bostancı guard away from the passage',
+    tutStep3: 'Hide behind the curtain or chest from the approaching Bostancı guard',
     tutStep4: 'Well done! Now reach the exit gate unseen',
     tutStep1Key: '[W,A,S,D] Move & [C] Crouch', tutStep2Key: '[Q] Throw Pebble', tutStep3Key: '[E] Hide', tutStep4Key: 'Reach Exit',
     tutStep1Done: 'Crouch mastered!', tutStep2Done: 'Pebble throw mastered!', tutStep3Done: 'Hiding mastered!',
@@ -3024,6 +3040,23 @@ const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const fmtT = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const mName = i => (i < 0 || !C.LEVELS[i] ? t('tutName') : L2(C.LEVELS[i].name));
 const clueKey = i => (i < 0 || !C.LEVELS[i] ? 'obj_clue' : C.LEVELS[i].id === 'bagdat-kosku' ? 'obj_diamond' : C.LEVELS[i].id === 'hazine' ? 'obj_key' : 'obj_clue');
+function guardLabel(g) {
+  if (!g) return t('guard_bostanci');
+  if (g.label) return L2(g.label);
+  const gt = C.GUARD_TYPES[g.role] || C.GUARD_TYPES[g.type];
+  if (gt && gt.label) return L2(gt.label);
+  return t('guard_' + (g.role || g.type || 'halb'));
+}
+function missionGuardDesc(D) {
+  if (!D || !D.guards || !D.guards.length) return t('guardsN', { n: 0 });
+  const counts = {};
+  for (const g of D.guards) {
+    const lbl = guardLabel(g);
+    counts[lbl] = (counts[lbl] || 0) + 1;
+  }
+  const parts = Object.entries(counts).map(([name, count]) => `${count} ${name}`);
+  return parts.join(', ');
+}
 
 // ---------------------------------------------------------------------------
 // Renderer, scene, sky, lights
@@ -3799,6 +3832,7 @@ const SKIN = 0xd9a77e;
 // figures face +x; aux tags limbs for the walk cycle in the vertex shader: +-1 legs (hip pivot), +-2 arms (shoulder pivot)
 const lathe = (pts, seg = 12) => new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), seg);
 function figureGeo(type) {
+  if (type === 'bostanci' || type === 'yeniceri') type = 'halb';
   const B = new GB(); seedV = 4242 + type.length * 31;
   if (type === 'cat') {
     B.geo(SPH(0.2, 10, 8), M(0, 0.28, 0, 0, 1.7, 0.85, 0.9), 0xd9822b, 0.05).geo(SPH(0.14, 10, 8), M(0.36, 0.43, 0), 0xe0903a);
@@ -3851,9 +3885,10 @@ function figureGeo(type) {
 }
 const FIG = {};
 function figMesh(type) {
-  if (!FIG[type]) FIG[type] = figureGeo(type);
-  const U = { uPhase: { value: 0 }, uAmp: { value: 0 }, uH: { value: FIG[type].userData.h || 1 }, uRim: { value: new THREE.Color(type === 'page' ? 0x8a7a3a : 0x34477a) } };
-  const m = new THREE.Mesh(FIG[type], new THREE.MeshLambertMaterial({ vertexColors: true, emissive: 0x000000 }));
+  const geoType = (type === 'bostanci' || type === 'yeniceri') ? 'halb' : type;
+  if (!FIG[geoType]) FIG[geoType] = figureGeo(geoType);
+  const U = { uPhase: { value: 0 }, uAmp: { value: 0 }, uH: { value: FIG[geoType].userData.h || 1 }, uRim: { value: new THREE.Color(type === 'page' ? 0x8a7a3a : 0x34477a) } };
+  const m = new THREE.Mesh(FIG[geoType], new THREE.MeshLambertMaterial({ vertexColors: true, emissive: 0x000000 }));
   m.material.customProgramCacheKey = () => 'fig';
   m.material.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, U);
@@ -4471,7 +4506,7 @@ function buildMap() {
     <li><svg style="color:${st[0] ? 'var(--gold2)' : 'var(--ink2)'}"><use href="#i-eye"/></svg>${t('star_unseen')}</li>
     <li><svg style="color:${st[1] ? 'var(--gold2)' : 'var(--ink2)'}"><use href="#i-clock"/></svg>${t('star_time', { s: fmtT(D.par) })}</li>
     <li><svg style="color:${st[2] ? 'var(--gold2)' : 'var(--ink2)'}"><use href="#${optIcon}"/></svg>${t('opt_' + D.opt)}</li>
-    <li><svg><use href="#i-pebble"/></svg>${t('pebblesN')} · ${t('guardsN', { n: D.guards.length })}</li></ul>
+    <li><svg><use href="#i-pebble"/></svg>${t('pebblesN')} · ${missionGuardDesc(D)}</li></ul>
     <div class="row" style="margin-bottom:10px"><span style="color:var(--ink2);font-size:13px">${t('bestStars')}</span><span class="mstars">${[0, 1, 2].map(k => starSvg(st[k])).join('')}</span></div>
     <div class="col"><button class="btn primary w" id="b-start" ${unl ? '' : 'disabled'}><svg><use href="#i-play"/></svg>${unl ? t('start') : lockMsg}</button>
     <button class="btn w" id="b-mback"><svg><use href="#i-home"/></svg>${t('mainMenu')}</button></div>`;
@@ -4681,11 +4716,11 @@ function handleEvents(S) {
     switch (e.k) {
       case 'step': if (!quiet) { SFX.step(e.surf, e.gait); if (e.surf === 'gravel' || e.gait === 'run') for (let k = 0; k < (e.gait === 'run' ? 3 : 2); k++) emit(S.p.x + (Math.random() - 0.5) * 0.3, 0.08, S.p.z + (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.5, 0.25 + Math.random() * 0.3, (Math.random() - 0.5) * 0.5, 0.7, 0.28, e.surf === 'gravel' ? 0xd8ccb0 : 0xa8a4a0, 0.35, 0.4); } break;
       case 'noise': if ((e.r >= 2 || e.kind === 'step') && !quiet) ring(e.x, e.z, e.r, e.kind === 'vase' || e.kind === 'pebble' || e.heard ? 0xffb050 : e.kind === 'meow' ? 0xff90c0 : 0xdfe8ff, e.kind === 'step'); break;
-      case 'sus': if (!quiet) { if (e.type === 'cat') { SFX.meow(panOf(g.x, g.z)); } else { SFX.hm(panOf(g.x, g.z)); toast('“' + pick(t(e.type === 'cook' ? 'susCook' : 'sus')) + '”', 'info', 2000); } } break;
-      case 'alert': if (!quiet && !e.called) { SFX.shout(panOf(g.x, g.z)); toast('“' + pick(t('alert')) + '”', 'bad', 2200); } break;
-      case 'call': if (!quiet) toast('“' + t('call') + '”', 'bad', 2000); break;
+      case 'sus': if (!quiet) { if (e.type === 'cat') { SFX.meow(panOf(g.x, g.z)); } else { SFX.hm(panOf(g.x, g.z)); const gl = g ? `[${guardLabel(g)}] ` : ''; toast(gl + '“' + pick(t(e.type === 'cook' ? 'susCook' : 'sus')) + '”', 'info', 2000); } } break;
+      case 'alert': if (!quiet && !e.called) { SFX.shout(panOf(g.x, g.z)); const gl = g ? `[${guardLabel(g)}] ` : ''; toast(gl + '“' + pick(t('alert')) + '”', 'bad', 2200); } break;
+      case 'call': if (!quiet) { const gl = g ? `[${guardLabel(g)}] ` : ''; toast(gl + '“' + t('call') + '”', 'bad', 2000); } break;
       case 'meow': if (!quiet) { SFX.meow(panOf(g.x, g.z)); toast(t('meow'), 'bad', 2200); } break;
-      case 'caught': if (!quiet) { SFX.caught(); toast(t('caught'), 'bad', 2800); $('fade').classList.add('on'); setTimeout(() => $('fade').classList.remove('on'), 1500); } break;
+      case 'caught': if (!quiet) { SFX.caught(); const msg = g ? t('caughtWho', { g: guardLabel(g) }) : t('caught'); toast(msg, 'bad', 2800); $('fade').classList.add('on'); setTimeout(() => $('fade').classList.remove('on'), 1500); } break;
       case 'respawn': resetDynamicSoft(S); break;
       case 'checkpoint': if (!quiet) { SFX.checkpoint(); toast(t('cp'), 'good', 1800); } break;
       case 'need': if (!quiet) toast(t(S.idx === 8 ? 'needKey' : 'need'), 'bad', 2000); break;
@@ -4910,16 +4945,19 @@ if (FLAG.debug) {
   $('dbg').hidden = false;
   try { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); DBG.gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'unknown'; } catch (e) { DBG.gpu = '?'; }
 }
-window.topkapi = {};
+window.topkapi = { MISSIONS: C.MISSIONS, GUARD_TYPES: C.GUARD_TYPES };
 function exportState() {
   const S = G.S;
   Object.assign(window.topkapi, {
-    screen: G.screen, mission: G.screen === 'play' || G.screen === 'result' ? (G.idx === -1 ? 0 : G.idx + 1) : 0, paused: G.paused, time: S ? +S.t.toFixed(1) : 0,
+    screen: G.screen, mission: G.screen === 'play' || G.screen === 'result' ? (G.idx === -1 ? 0 : G.idx + 1) : 0,
+    missionTitle: G.idx === -1 ? t('tutName') : (C.LEVELS[G.idx] ? mName(G.idx) : ''),
+    paused: G.paused, time: S ? +S.t.toFixed(1) : 0,
     player: S ? { x: +S.p.x.toFixed(2), z: +S.p.z.toFixed(2), vis: +S.p.vis.toFixed(2), gait: S.p.gait, hidden: S.p.hidden >= 0, pebbles: S.pebbles } : null,
-    guards: S ? S.guards.map(g => ({ type: g.type, state: g.state, sus: +g.sus.toFixed(2) })) : [], clues: S ? S.clues + '/' + S.need : '',
+    guards: S ? S.guards.map(g => ({ type: g.type, role: g.role, label: guardLabel(g), state: g.state, sus: +g.sus.toFixed(2) })) : [], clues: S ? S.clues + '/' + S.need : '',
     result: S && S.result ? { ok: S.result.ok, time: +S.result.time.toFixed(1), stars: S.result.stars } : null,
     stars: Array.from({ length: NM }, (_, i) => starsOf(i)), totalStars: totalStars(), done: Array.from({ length: NM }, (_, i) => !!PROG.done[i]),
     tutDone: !!PROG.tutDone, actions: PROG.actions || { crouch: false, pebble: false, hide: false },
+    missions: C.MISSIONS, guardTypes: C.GUARD_TYPES,
     bot: { auto: FLAG.auto, done: AUTO.done, log: BOTLOG.slice() }, fps: DBG.fps, drawCalls: DBG.calls, triangles: DBG.tris, gpu: DBG.gpu,
     errors: window.__errs.slice(), assets: ASSETS, quality: SET.quality, lang: SET.lang,
   });
