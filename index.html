@@ -506,6 +506,75 @@ b, .num { font-variant-numeric: tabular-nums; }
   .prompt { bottom: calc(248px + var(--sa-b)); font-size: 13.5px; padding: 8px 16px; }
 }
 
+/* Tutorial prompt overlay & action guidance */
+.tut-banner {
+  position: fixed;
+  top: calc(72px + var(--sa-t));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 23;
+  padding: 10px 20px;
+  max-width: min(92vw, 560px);
+  width: max-content;
+  text-align: center;
+  border-radius: 28px;
+  background: rgba(11, 29, 58, 0.95);
+  border: 1.5px solid var(--gold2);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 16px rgba(201, 162, 39, 0.25);
+  color: var(--vellum);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+  animation: tutBannerIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes tutBannerIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.tut-banner kbd {
+  font: 700 12px/1.2 ui-monospace, Consolas, monospace;
+  border: 1px solid var(--gold);
+  border-radius: 5px;
+  padding: 2px 7px;
+  color: var(--gold3);
+  background: rgba(201, 162, 39, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  margin: 0 2px;
+}
+.tut-banner .tut-icon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  color: var(--gold2);
+}
+.tut-banner .tut-step {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(201, 162, 39, 0.22);
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .tut-banner {
+    top: calc(118px + var(--sa-t));
+    font-size: 12px;
+    padding: 7px 12px;
+    gap: 7px;
+    max-width: 94vw;
+  }
+  .tut-banner .tut-icon { width: 18px; height: 18px; flex-basis: 18px; }
+}
+
 .note {
   position: fixed;
   left: 50%;
@@ -1593,6 +1662,7 @@ input[type=range] {
     <div class="tools"><span><svg><use href="#i-pebble"/></svg><b id="h-peb">3</b></span><span><svg><use href="#i-dash"/></svg><span class="dashbar"><i id="h-dash"></i></span></span><span id="h-surf"></span></div>
   </div>
   <div class="prompt glass" id="prompt" hidden><kbd id="prompt-k">E</kbd><span id="prompt-t"></span></div>
+  <div class="tut-banner glass" id="tut-banner" hidden></div>
   <div class="note" id="note" hidden><h5 id="note-h"></h5><p id="note-p"></p></div>
   <div class="touch" id="touch" hidden>
     <div class="stick" id="stick"><i id="knob"></i></div>
@@ -1760,6 +1830,36 @@ const PARTS = [
   { name: ['Harem', 'The Harem'] },
   { name: ['Hazine', 'The Treasury'] },
 ];
+const TUTORIAL_LEVEL = {
+  id: 'talim-avlusu', part: 0, name: ['Talim Avlusu', 'Training Courtyard'], opt: 'ghost', par: 30, limit: 180,
+  brief: [
+    'Saray gecesine adım atmadan önce adımlarını sına. Muhafızlara görünmeden çömel, taşla dikkat dağıt, perdeye gizlen ve kapıya ulaş.',
+    'Test your steps before slipping into the palace night. Crouch to silence your steps, distract a guard with a pebble, hide behind curtains and reach the gate.'
+  ],
+  clues: [['Talim tam: Çakıl üzerinde sessizce yürü, muhafızı şaşırt ve saklan.', 'Training complete: Move silently over gravel, distract the watcher and hide.']],
+  map: [
+    '##############################',
+    '#T.,,,,,,,,,,,T#T...........T#',
+    '#K.,.........,.#.............#',
+    '#P.,..t...L..,.#....~~~~.....#',
+    '#..,.........,......~FF~.....#',
+    '#..,..V......,.#....~~~~..L..#',
+    '#..,,,,,,,,,,,.#.............#',
+    '#..............#T...........T#',
+    '########..######...L..#.######',
+    '#......#.w#...........#......#',
+    '#.C....#.w#..L..o.o.o.#......#',
+    '#......#.w#.....o...o.#....X.#',
+    '#H..............o...o........#',
+    '#......#..#..t........#..B...#',
+    '#T....C#..#T.........T#T....T#',
+    '##############################',
+  ],
+  guards: [
+    { type: 'halb', route: [[12, 6, 4, 70, 90]] },
+    { type: 'halb', route: [[15, 12, 3, 60], [24, 12, 3, 60]] },
+  ]
+};
 const LEVELS = [
   { id: 'orta-kapi', part: 0, name: ['Orta Kapı', 'The Middle Gate'], opt: 'bulb', par: 70, limit: 420,
     brief: ['Gece yarısı. Hazinedeki Kaşıkçı Elması sahte! Hırsız sarayın içinde. Birinci avludan sessizce geç, ipucunu bul ve Orta Kapı’ya ulaş.',
@@ -2165,7 +2265,7 @@ function makeGuard(L, G, k) {
     state: 'patrol', sus: 0, phase: '', pt: 0, tx: 0, tz: 0, path: null, pi: 0, repath: 0, lostT: 0, lsx: 0, lsz: 0, seenT: -99, sawHide: -1, searchN: 0, meowT: -99, relightK: -1, seed: 1234567 + k * 7919, moving: false, see: 0 };
 }
 function newSim(idx, opts = {}) {
-  const L = typeof idx === 'object' ? idx : parse(LEVELS[idx], idx);
+  const L = typeof idx === 'object' ? idx : (idx === -1 || idx === 'tut' ? parse(TUTORIAL_LEVEL, -1) : parse(LEVELS[idx], idx));
   const S = { L, idx: L.idx, t: 0, limit: L.D.limit, par: L.D.par, over: false, result: null, events: [], noises: [], ghost: false,
     p: { x: L.start.x, z: L.start.z, vx: 0, vz: 0, face: -Math.PI / 2, crouch: false, gait: 'idle', speed: 0, hidden: -1, hideT: 0, hfx: 0, hfz: 0, dashT: 0, dashCd: 0, ddx: 0, ddz: 0, stepAcc: 0, vis: 0, light: 0, surf: 'stone' },
     guards: [], lit: new Uint8Array(L.lights.length).fill(1), snuffT: new Float32Array(L.lights.length), broken: new Uint8Array(L.vases.length), got: new Uint8Array(L.items.length),
@@ -2274,7 +2374,7 @@ function updPlayer(S, I, dt) {
     } else if (F && F.kind === 'pedestal') {
       if (S.clues >= S.need) { S.placed = true; ev(S, { k: 'place' }); win(S); return; }
       if (S.t - S.needT > 2) { S.needT = S.t; ev(S, { k: 'need' }); }
-    } else if (F && F.kind === 'hide') { hide(S, F.i); return; }
+    } else if (F && F.kind === 'hide' && I.canHide !== false) { hide(S, F.i); return; }
     else if (F && F.kind === 'snuff') { S.lit[F.i] = 0; S.snuffT[F.i] = 0; S.stats.snuffed++; relight(S); ev(S, { k: 'snuff', i: F.i }); }
   }
   if (I.throwAt && S.pebbles > 0 && !S.pebble) {
@@ -2652,7 +2752,7 @@ function botInput(S, B) {
   return I;
 }
 
-return { CELL, DT, TILE, GT, NOISE, stepNoise, hears, damping, SPEED, LEVELS, PARTS, MOON, LIGHT, parse, newSim, step, clone, focus, lightAt, cellAt, ccx, ccz, los, plan, predict, makeBot, botInput, result, angDiff, clamp, lerp, PSTEP };
+return { CELL, DT, TILE, GT, NOISE, stepNoise, hears, damping, SPEED, LEVELS, TUTORIAL_LEVEL, PARTS, MOON, LIGHT, parse, newSim, step, clone, focus, lightAt, cellAt, ccx, ccz, los, plan, predict, makeBot, botInput, result, angDiff, clamp, lerp, PSTEP };
 })();
 if (typeof module !== 'undefined') module.exports = CORE;
 </script>
@@ -2688,7 +2788,7 @@ const NM = C.LEVELS.length;
 const Q = new URLSearchParams(location.search);
 const FLAG = {
   auto: Q.has('auto'), debug: Q.has('debug'), low: Q.has('low'), sim: parseFloat(Q.get('sim') || '0') || 0, lang: Q.get('lang'),
-  nosave: Q.has('nosave'), noassets: Q.has('noassets'), mission: parseInt(Q.get('mission') || '0', 10) || 0, speed: parseFloat(Q.get('speed') || '0') || 0,
+  nosave: Q.has('nosave'), noassets: Q.has('noassets'), mission: Q.has('mission') ? parseInt(Q.get('mission'), 10) : null, speed: parseFloat(Q.get('speed') || '0') || 0,
   screen: Q.get('screen'),
 };
 // Every mesh, texture and sound is generated in code; there are no asset files, so ?noassets changes nothing.
@@ -2701,13 +2801,34 @@ const navLang = /^tr/i.test(navigator.language || '') ? 'tr' : 'en';
 const SET = load('settings', { master: 0.8, music: 0.6, sfx: 0.8, lang: navLang, quality: isPhone ? 'low' : 'high', musicOn: true, sfxOn: true, muted: false });
 if (FLAG.lang === 'tr' || FLAG.lang === 'en') SET.lang = FLAG.lang;
 if (FLAG.low) SET.quality = 'low';
-const PROG = load('save', { stars: [], done: [], last: 0, times: [] });
+const PROG = load('save', { stars: [], done: [], last: 0, times: [], tutDone: false, actions: { crouch: false, pebble: false, hide: false } });
 const BEST = load('best', { stars: 0, missions: 0 });
 if (FLAG.auto || FLAG.nosave) { PROG.stars = []; PROG.done = []; PROG.last = 0; PROG.times = []; }
+if (PROG.done && PROG.done.some(Boolean)) { PROG.tutDone = true; if (!PROG.actions) PROG.actions = { crouch: true, pebble: true, hide: true }; }
 const saveSettings = () => store('settings', SET), saveProg = () => store('save', PROG);
-const starsOf = i => (PROG.stars[i] || [0, 0, 0]).reduce((a, b) => a + (b ? 1 : 0), 0);
+function canAction(action) {
+  if (FLAG.auto) return true;
+  if (G.idx === -1) {
+    const s = G.tutStep || 1;
+    if (action === 'crouch') return s >= 1;
+    if (action === 'pebble') return s >= 2;
+    if (action === 'hide') return s >= 3;
+  }
+  if (PROG.tutDone || (PROG.done && PROG.done.some(Boolean))) return true;
+  if (PROG.actions && PROG.actions[action]) return true;
+  if (PROG[action] || PROG['can' + action[0].toUpperCase() + action.slice(1)]) return true;
+  return false;
+}
+function unlockAction(action) {
+  if (!PROG.actions) PROG.actions = { crouch: false, pebble: false, hide: false };
+  PROG.actions[action] = true;
+  PROG[action] = true;
+  PROG['can' + action[0].toUpperCase() + action.slice(1)] = true;
+  saveProg();
+}
+const starsOf = i => (i < 0 ? (PROG.tutDone ? 3 : 0) : (PROG.stars[i] || [0, 0, 0]).reduce((a, b) => a + (b ? 1 : 0), 0));
 const totalStars = () => { let s = 0; for (let i = 0; i < NM; i++) s += starsOf(i); return s; };
-const unlocked = i => i === 0 || !!PROG.done[i - 1] || FLAG.auto;
+const unlocked = i => (i === -1 ? true : (i === 0 ? (!!PROG.tutDone || (PROG.done && PROG.done.some(Boolean)) || FLAG.auto) : (!!PROG.done[i - 1] || FLAG.auto)));
 
 // ---------------------------------------------------------------------------
 // i18n
@@ -2746,6 +2867,16 @@ const I18N = {
     share: 'Paylaş', another: 'Başka oyun', a11y: 'Erişilebilirlik', a11yOpen: 'Aç',
     shareMission: '{n}. {m}: {st} · {t}', shareDaily: 'Günün Meydan Okuması {d} · seri {k}', shareEnd: '9 görev · {s}/27 yıldız · {t}',
     awFirst: 'İlk görev tamam', awGhost: 'Üç yıldızlı görev', awAll: 'Elması yerine koydun: 9 görev',
+    tutName: 'Talim Avlusu', tutPart: 'Eğitim',
+    tutDesc: 'Saray gecesine adım atmadan önce adımlarını sına. Muhafızlara görünmeden çömel, taşla dikkat dağıt, perdeye gizlen ve kapıya ulaş.',
+    tutStep1: 'Çömelerek çakıl üzerinde sessizce ilerle',
+    tutStep2: 'Geçitteki nöbetçiyi taş atarak uzaklaştır',
+    tutStep3: 'Gelen muhafızdan kaçmak için perdeye veya sandığa saklan',
+    tutStep4: 'Harika! Şimdi yakalanmadan çıkış kapısına ulaş',
+    tutStep1Key: '[W,A,S,D] Yürü & [C] Çömel', tutStep2Key: '[Q] Taş At', tutStep3Key: '[E] Saklan', tutStep4Key: 'Kapıya Ulaş',
+    tutStep1Done: 'Çömelme öğrenildi!', tutStep2Done: 'Taş atma öğrenildi!', tutStep3Done: 'Gizlenme öğrenildi!',
+    tutStep: 'ADIM {s}/4', tutComplete: 'Eğitim Tamamlandı!', tutCompleteSub: 'Temel gizlilik hareketleri öğrenildi. 1. Görev açıldı.',
+    startM1: '1. Göreve Başla', lockedTut: 'Kilitli: önce Görev 0’ı tamamla', actLocked: 'Bu hareket henüz açılmadı (Görev 0: Talim)',
   },
   en: {
     subtitle: 'A secret errand in the palace at midnight', play: 'Play', cont: 'Continue: {m}', settings: 'Settings', palaceMap: 'Palace Map',
@@ -2780,6 +2911,16 @@ const I18N = {
     share: 'Share', another: 'Another game', a11y: 'Accessibility', a11yOpen: 'Open',
     shareMission: '{n}. {m}: {st} · {t}', shareDaily: 'Daily challenge {d} · streak {k}', shareEnd: '9 missions · {s}/27 stars · {t}',
     awFirst: 'First mission complete', awGhost: 'A three-star mission', awAll: 'The diamond is back: 9 missions',
+    tutName: 'Training Courtyard', tutPart: 'Tutorial',
+    tutDesc: 'Test your steps before slipping into the palace night. Crouch to silence your steps, distract a guard with a pebble, hide behind curtains and reach the gate.',
+    tutStep1: 'Crouch to walk silently over gravel',
+    tutStep2: 'Throw a pebble to lure the guard away from the passage',
+    tutStep3: 'Hide behind the curtain or chest from the approaching guard',
+    tutStep4: 'Well done! Now reach the exit gate unseen',
+    tutStep1Key: '[W,A,S,D] Move & [C] Crouch', tutStep2Key: '[Q] Throw Pebble', tutStep3Key: '[E] Hide', tutStep4Key: 'Reach Exit',
+    tutStep1Done: 'Crouch mastered!', tutStep2Done: 'Pebble throw mastered!', tutStep3Done: 'Hiding mastered!',
+    tutStep: 'STEP {s}/4', tutComplete: 'Training Complete!', tutCompleteSub: 'Basic stealth techniques mastered. Mission 1 is now unlocked.',
+    startM1: 'Start Mission 1', lockedTut: 'Locked: complete Mission 0 first', actLocked: 'Action not unlocked yet (Mission 0: Tutorial)',
   },
 };
 function t(k, vars) {
@@ -2790,8 +2931,8 @@ function t(k, vars) {
 const L2 = pair => pair[SET.lang === 'tr' ? 0 : 1];
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const fmtT = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
-const mName = i => L2(C.LEVELS[i].name);
-const clueKey = i => C.LEVELS[i].id === 'bagdat-kosku' ? 'obj_diamond' : C.LEVELS[i].id === 'hazine' ? 'obj_key' : 'obj_clue';
+const mName = i => (i < 0 || !C.LEVELS[i] ? t('tutName') : L2(C.LEVELS[i].name));
+const clueKey = i => (i < 0 || !C.LEVELS[i] ? 'obj_clue' : C.LEVELS[i].id === 'bagdat-kosku' ? 'obj_diamond' : C.LEVELS[i].id === 'hazine' ? 'obj_key' : 'obj_clue');
 
 // ---------------------------------------------------------------------------
 // Renderer, scene, sky, lights
@@ -3803,12 +3944,19 @@ function readInput(S) {
   if (KEYS.has('KeyD') || KEYS.has('ArrowRight')) ix += 1; if (KEYS.has('KeyA') || KEYS.has('ArrowLeft')) ix -= 1;
   ix += INP.sx; iy += INP.sy;
   const fx = -Math.sin(CAM.yaw), fz = -Math.cos(CAM.yaw), rx = Math.cos(CAM.yaw), rz = -Math.sin(CAM.yaw);
-  const I = { mx: rx * ix + fx * iy, mz: rz * ix + fz * iy, run: INP.run || KEYS.has('ShiftLeft') || KEYS.has('ShiftRight'), crouch: INP.crouchT || KEYS.has('ControlLeft') || KEYS.has('ControlRight'), interact: INP.interact, dash: INP.dash, throwAt: null, speed: null };
+  const canC = canAction('crouch'), canP = canAction('pebble'), canH = canAction('hide');
+  const crouchReq = INP.crouchT || KEYS.has('ControlLeft') || KEYS.has('ControlRight');
+  if (crouchReq && !canC) { INP.crouchT = false; if ($('t-crouch')) $('t-crouch').classList.remove('on'); }
+  const I = { mx: rx * ix + fx * iy, mz: rz * ix + fz * iy, run: INP.run || KEYS.has('ShiftLeft') || KEYS.has('ShiftRight'), crouch: canC && crouchReq, interact: INP.interact, dash: INP.dash, throwAt: null, speed: null, canHide: canH };
   if (INP.throwQ) {
-    const P = S.p;
-    if (WORLD.reticle.visible) I.throwAt = { x: WORLD.reticle.position.x, z: WORLD.reticle.position.z };
-    else I.throwAt = { x: P.x + Math.cos(P.face) * 7, z: P.z + Math.sin(P.face) * 7 };
-    if (S.pebbles <= 0) toast(t('noPeb'), 'bad');
+    if (!canP) {
+      toast(t('actLocked'), 'bad', 2000);
+    } else {
+      const P = S.p;
+      if (WORLD.reticle.visible) I.throwAt = { x: WORLD.reticle.position.x, z: WORLD.reticle.position.z };
+      else I.throwAt = { x: P.x + Math.cos(P.face) * 7, z: P.z + Math.sin(P.face) * 7 };
+      if (S.pebbles <= 0) toast(t('noPeb'), 'bad');
+    }
   }
   INP.interact = INP.dash = INP.throwQ = false;
   return I;
@@ -3874,7 +4022,10 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyE') INP.interact = true;
   if (e.code === 'KeyQ') INP.throwQ = true;
   if (e.code === 'Space') INP.dash = true;
-  if (e.code === 'KeyC') { INP.crouchT = !INP.crouchT; $('t-crouch').classList.toggle('on', INP.crouchT); }
+  if (e.code === 'KeyC') {
+    if (!canAction('crouch')) { toast(t('actLocked'), 'bad', 2000); return; }
+    INP.crouchT = !INP.crouchT; $('t-crouch').classList.toggle('on', INP.crouchT);
+  }
 });
 addEventListener('keyup', e => KEYS.delete(e.code));
 addEventListener('blur', () => KEYS.clear());
@@ -3889,7 +4040,10 @@ function showTouch() { if (INP.touch) return; INP.touch = true; if (G.screen ===
   st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
   const tap = (el, fn) => el.addEventListener('pointerdown', e => { audioInit(); e.preventDefault(); fn(); });
   tap($('t-use'), () => { INP.interact = true; }); tap($('t-throw'), () => { INP.throwQ = true; }); tap($('t-dash'), () => { INP.dash = true; });
-  tap($('t-crouch'), () => { INP.crouchT = !INP.crouchT; $('t-crouch').classList.toggle('on', INP.crouchT); });
+  tap($('t-crouch'), () => {
+    if (!canAction('crouch')) { toast(t('actLocked'), 'bad', 2000); return; }
+    INP.crouchT = !INP.crouchT; $('t-crouch').classList.toggle('on', INP.crouchT);
+  });
   tap($('t-pause2'), () => togglePause());
   const run = $('t-run');
   run.addEventListener('pointerdown', e => { e.preventDefault(); INP.run = true; run.classList.add('on'); });
@@ -4042,8 +4196,59 @@ function updateAudio(dt) {
 // ---------------------------------------------------------------------------
 // Game state, screens and HUD
 // ---------------------------------------------------------------------------
-const G = { screen: 'title', S: null, idx: 0, sel: 0, paused: false, bot: null, time: 0, hidden: false, simming: false, acc: 0, resultT: 0, speed: FLAG.speed || 1, ready: false, hud: 0, last: null };
+const G = { screen: 'title', S: null, idx: 0, sel: 0, paused: false, bot: null, time: 0, hidden: false, simming: false, acc: 0, resultT: 0, speed: FLAG.speed || 1, ready: false, hud: 0, last: null, tutStep: 0, tutCrouchT: 0 };
 const DBG = { fps: 0, calls: 0, tris: 0, gpu: '', frames: 0, ft: 0 };
+function updateTutBanner() {
+  const b = $('tut-banner');
+  if (!b) return;
+  if (G.screen !== 'play' || G.idx !== -1) { b.hidden = true; return; }
+  const s = G.tutStep || 1;
+  const icons = ['', 'i-crouch', 'i-pebble', 'i-hand', 'i-gate'];
+  const icon = icons[s] || 'i-star';
+  const touchKeys = ['', `[${t('crouchS')}]`, `[${t('throwS')}]`, `[${t('useS')}]`, t('tutStep4Key')];
+  const deskKeys = ['', '<kbd>C</kbd>', '<kbd>Q</kbd>', '<kbd>E</kbd>', t('tutStep4Key')];
+  const keyLabel = INP.touch ? touchKeys[s] : deskKeys[s];
+  b.innerHTML = `<span class="tut-step">${t('tutStep', { s })}</span><svg class="tut-icon"><use href="#${icon}"/></svg><span>${t('tutStep' + s)} &middot; <strong style="color:var(--gold-bright)">${keyLabel}</strong></span>`;
+  b.hidden = false;
+}
+function updateTutorialFlow(S, dt) {
+  if (S.over) return;
+  const step = G.tutStep || 1;
+  if (step === 1) {
+    if (S.p.crouch && S.p.speed > 0.1) G.tutCrouchT = (G.tutCrouchT || 0) + dt;
+    if ((G.tutCrouchT && G.tutCrouchT > 0.6) || (S.p.crouch && S.p.x > 3.8) || S.p.x > 6.0) {
+      G.tutStep = 2;
+      G.tutCrouchT = 0;
+      unlockAction('crouch');
+      unlockAction('pebble');
+      SFX.checkpoint();
+      toast(t('tutStep1Done'), 'good', 2200);
+      buildObjectives();
+      updateTutBanner();
+    }
+  } else if (step === 2) {
+    const g0 = S.guards[0];
+    const distracted = g0 && (g0.state === 'sus' || g0.state === 'search' || g0.state === 'alert');
+    if (S.stats.pebbles > 0 || distracted || S.p.z > 9.5) {
+      G.tutStep = 3;
+      unlockAction('pebble');
+      unlockAction('hide');
+      SFX.checkpoint();
+      toast(t('tutStep2Done'), 'good', 2200);
+      buildObjectives();
+      updateTutBanner();
+    }
+  } else if (step === 3) {
+    if (S.p.hidden >= 0 || S.stats.hides > 0 || S.p.x > 18.0) {
+      G.tutStep = 4;
+      unlockAction('hide');
+      SFX.checkpoint();
+      toast(t('tutStep3Done'), 'good', 2200);
+      buildObjectives();
+      updateTutBanner();
+    }
+  }
+}
 function toast(msg, kind = 'info', ms = 2600) {
   if (G.simming) return;
   const box = $('toasts'); while (box.children.length > 3) box.firstChild.remove();
@@ -4058,7 +4263,7 @@ function showNote(head, text, ms = 5200) {
 }
 function starSvg(on, cls = '') { return `<svg class="${on ? 'on' : ''} ${cls}"><use href="#i-star"/></svg>`; }
 function show(id, on) { $(id).hidden = !on; }
-function hideAll() { for (const id of ['title', 'mapscr', 'pause', 'settings', 'result', 'endscr', 'hud', 'touch']) show(id, false); $('note').hidden = true; $('prompt').hidden = true; }
+function hideAll() { for (const id of ['title', 'mapscr', 'pause', 'settings', 'result', 'endscr', 'hud', 'touch']) show(id, false); $('note').hidden = true; $('prompt').hidden = true; if ($('tut-banner')) $('tut-banner').hidden = true; }
 function applyTexts() {
   document.documentElement.lang = SET.lang;
   for (const el of document.querySelectorAll('[data-t]')) el.textContent = t(el.dataset.t);
@@ -4096,8 +4301,9 @@ function setTitleScene() {
 }
 function openMap(sel) {
   G.daily = null; hideAll(); G.screen = 'map'; G.paused = false;
-  if (sel != null) G.sel = sel; else G.sel = Math.min(NM - 1, PROG.done.filter(Boolean).length);
-  if (!unlocked(G.sel)) G.sel = 0;
+  if (sel != null) G.sel = sel;
+  else G.sel = (PROG.tutDone || (PROG.done && PROG.done.some(Boolean))) ? Math.min(NM - 1, PROG.done.filter(Boolean).length) : -1;
+  if (!unlocked(G.sel)) G.sel = -1;
   show('mapscr', true); buildMap();
   if (!G.S || G.S.idx !== 2 || G.screen !== 'map') { if (!G.S || !G.S.ghost) setTitleScene(); }
 }
@@ -4118,7 +4324,13 @@ function buildMap() {
     <text x="400" y="330" fill="#e8c75c" font-family="'Cinzel Decorative', Georgia, serif" font-size="14" letter-spacing="0.05em">${t('partNames')[2]}</text>
     <text x="470" y="30" fill="#9db4ff" font-family="'Cinzel Decorative', Georgia, serif" font-size="13" font-style="italic">${SET.lang === 'tr' ? 'Boğaziçi' : 'Bosphorus'}</text>
     <path d="M440 18 q10 -6 20 0 t20 0 M500 40 q10 -6 20 0 t20 0" stroke="#7ea6ea" fill="none" opacity=".6"/>
+    <path d="M 52 296 L 118 300" fill="none" stroke="#e8c75c" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round" opacity=".7"/>
     <path d="${path}" fill="none" stroke="#e8c75c" stroke-width="2.5" stroke-dasharray="2 7" stroke-linecap="round" opacity=".8"/>`;
+  const tutSel = G.sel === -1, tutDone = !!PROG.tutDone;
+  s += `<g class="mnode ${tutDone ? 'done' : ''} ${tutSel ? 'sel' : ''}" data-i="-1" tabindex="0" role="button" aria-label="0. ${t('tutName')}">
+    <circle class="c" cx="52" cy="296" r="17"/><text x="52" y="296">0</text>
+    <use href="#i-star" x="45" y="315" width="14" height="14" fill="${tutDone ? '#e8c75c' : 'rgba(255,255,255,.18)'}"/>
+  </g>`;
   MAPPOS.forEach((p, i) => {
     const lock = !unlocked(i), done = !!PROG.done[i], sel = i === G.sel; const n = starsOf(i);
     s += `<g class="mnode ${lock ? 'lock' : ''} ${done ? 'done' : ''} ${sel ? 'sel' : ''}" data-i="${i}" tabindex="${lock ? -1 : 0}" role="button" aria-label="${i + 1}. ${mName(i)}">
@@ -4133,10 +4345,35 @@ function buildMap() {
     g.addEventListener('click', () => { G.sel = i; SFX.click(); buildMap(); });
     g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); G.sel = i; buildMap(); $('b-start').focus(); } });
   }
-  $('mlist').innerHTML = C.LEVELS.map((_, i) => `<button ${unlocked(i) ? '' : 'disabled'} class="${i === G.sel ? 'sel' : ''}" data-i="${i}" aria-label="${i + 1}. ${mName(i)}">${i + 1}</button>`).join('');
+  $('mlist').innerHTML = `<button class="${G.sel === -1 ? 'sel' : ''}" data-i="-1" aria-label="0. ${t('tutName')}">0</button>` +
+    C.LEVELS.map((_, i) => `<button ${unlocked(i) ? '' : 'disabled'} class="${i === G.sel ? 'sel' : ''}" data-i="${i}" aria-label="${i + 1}. ${mName(i)}">${i + 1}</button>`).join('');
   for (const b of $('mlist').children) b.addEventListener('click', () => { G.sel = +b.dataset.i; SFX.click(); buildMap(); });
+  if (G.sel === -1) {
+    $('brief').innerHTML = `<div class="part">${t('tutPart')}</div>
+      <h3>0. ${t('tutName')}</h3><p>${t('tutDesc')}</p>
+      <ul>
+        <li><svg><use href="#i-crouch"/></svg>1. ${t('tutStep1')}</li>
+        <li><svg><use href="#i-pebble"/></svg>2. ${t('tutStep2')}</li>
+        <li><svg><use href="#i-hand"/></svg>3. ${t('tutStep3')}</li>
+        <li><svg><use href="#i-gate"/></svg>4. ${t('tutStep4')}</li>
+        <li><svg><use href="#i-clock"/></svg>${t('par', { s: '30' })}</li>
+      </ul>
+      <div class="row" style="margin-bottom:10px">
+        <span style="color:var(--ink2);font-size:13px">${t('bestStars')}</span>
+        <span class="mstars">${starSvg(PROG.tutDone)}</span>
+      </div>
+      <div class="col">
+        <button class="btn primary w" id="b-start"><svg><use href="#i-play"/></svg>${t('start')}</button>
+        <button class="btn w" id="b-mback"><svg><use href="#i-home"/></svg>${t('mainMenu')}</button>
+      </div>`;
+    $('b-start').addEventListener('click', () => { audioInit(); SFX.click(); startMission(-1); });
+    $('b-mback').addEventListener('click', () => { SFX.click(); toTitle(); });
+    return;
+  }
   const D = C.LEVELS[G.sel], i = G.sel, st = PROG.stars[i] || [0, 0, 0];
   const optIcon = { bulb: 'i-bulb', letter: 'i-letter', ghost: 'i-ghost' }[D.opt];
+  const unl = unlocked(i);
+  const lockMsg = (i === 0 && !unl) ? t('lockedTut') : t('locked');
   $('brief').innerHTML = `<div class="part">${t('part', { n: D.part + 1, p: t('partNames')[D.part] })}</div>
     <h3>${i + 1}. ${mName(i)}</h3><p>${L2(D.brief)}</p>
     <ul><li><svg><use href="#i-scroll"/></svg>${t(clueKey(i))} → ${t(D.map.some(r => r.includes('^')) ? 'obj_place' : 'obj_exit')}</li>
@@ -4145,13 +4382,14 @@ function buildMap() {
     <li><svg style="color:${st[2] ? 'var(--gold2)' : 'var(--ink2)'}"><use href="#${optIcon}"/></svg>${t('opt_' + D.opt)}</li>
     <li><svg><use href="#i-pebble"/></svg>${t('pebblesN')} · ${t('guardsN', { n: D.guards.length })}</li></ul>
     <div class="row" style="margin-bottom:10px"><span style="color:var(--ink2);font-size:13px">${t('bestStars')}</span><span class="mstars">${[0, 1, 2].map(k => starSvg(st[k])).join('')}</span></div>
-    <div class="col"><button class="btn primary w" id="b-start" ${unlocked(i) ? '' : 'disabled'}><svg><use href="#i-play"/></svg>${unlocked(i) ? t('start') : t('locked')}</button>
+    <div class="col"><button class="btn primary w" id="b-start" ${unl ? '' : 'disabled'}><svg><use href="#i-play"/></svg>${unl ? t('start') : lockMsg}</button>
     <button class="btn w" id="b-mback"><svg><use href="#i-home"/></svg>${t('mainMenu')}</button></div>`;
   $('b-start').addEventListener('click', () => { audioInit(); SFX.click(); startMission(G.sel); });
   $('b-mback').addEventListener('click', () => { SFX.click(); toTitle(); });
 }
 function startMission(i) {
-  hideAll(); G.idx = i; G.sel = i; if (!G.daily) { PROG.last = i; saveProg(); }
+  hideAll(); G.idx = i; G.sel = i; if (!G.daily && i >= 0) { PROG.last = i; saveProg(); }
+  G.tutStep = i === -1 ? 1 : 0; G.tutCrouchT = 0;
   const S = C.newSim(i); G.S = S;
   if (!WORLD.level || WORLD.level.idx !== i) buildLevel(S.L);
   resetDynamic(S); applySky('night', 0);
@@ -4159,14 +4397,33 @@ function startMission(i) {
   INP.crouchT = false; $('t-crouch').classList.remove('on'); KEYS.clear();
   CAM.tx = S.p.x; CAM.tz = S.p.z; CAM.yaw = 0; CAM.pitch = 1.05;
   show('hud', true); if (INP.touch) show('touch', true);
-  $('h-mission').textContent = (i + 1) + ' · ' + mName(i);
-  buildObjectives();
-  toast(t('intro', { p: t('partNames')[C.LEVELS[i].part], m: mName(i) }), 'info', 3200);
-  if (i === 0 && !G.bot) setTimeout(() => { if (G.screen === 'play' && G.S === S) toast(t('ringHint'), 'info', 7000); }, 3400);
+  if (i === -1) {
+    $('h-mission').textContent = '0 · ' + t('tutName');
+    buildObjectives();
+    updateTutBanner();
+    toast(t('intro', { p: t('tutPart'), m: t('tutName') }), 'info', 3200);
+  } else {
+    $('h-mission').textContent = (i + 1) + ' · ' + mName(i);
+    buildObjectives();
+    if ($('tut-banner')) $('tut-banner').hidden = true;
+    toast(t('intro', { p: t('partNames')[C.LEVELS[i].part], m: mName(i) }), 'info', 3200);
+    if (i === 0 && !G.bot) setTimeout(() => { if (G.screen === 'play' && G.S === S) toast(t('ringHint'), 'info', 7000); }, 3400);
+  }
   if (!G.simming) canvas.focus();
 }
 function buildObjectives() {
   const S = G.S; if (!S) return; const D = S.L.D, i = S.idx;
+  if (i === -1) {
+    const step = G.tutStep || 1;
+    const fin = S.over && S.result && S.result.ok;
+    const row = (cls, icon, txt) => `<div class="orow ${cls}"><svg><use href="#${icon}"/></svg><span>${txt}</span></div>`;
+    $('objlist').innerHTML =
+      row(step > 1 ? 'done' : 'act', step > 1 ? 'i-check' : 'i-crouch', t('tutStep1')) +
+      row(step > 2 ? 'done' : step === 2 ? 'act' : '', step > 2 ? 'i-check' : 'i-pebble', t('tutStep2')) +
+      row(step > 3 ? 'done' : step === 3 ? 'act' : '', step > 3 ? 'i-check' : 'i-hand', t('tutStep3')) +
+      row(fin ? 'done' : step === 4 ? 'act' : '', fin ? 'i-check' : 'i-gate', t('tutStep4'));
+    return;
+  }
   const ped = !!S.L.pedestal, cl = S.clues >= S.need, fin = S.over && S.result && S.result.ok;
   const optDone = D.opt === 'ghost' ? S.ghostOk : S.optGot, optIcon = { bulb: 'i-bulb', letter: 'i-letter', ghost: 'i-ghost' }[D.opt];
   const row = (cls, icon, txt) => `<div class="orow ${cls}"><svg><use href="#${icon}"/></svg><span>${txt}</span></div>`;
@@ -4186,7 +4443,21 @@ function showResult() {
   const S = G.S, R = S.result, i = G.idx;
   G.hud = 0; updateHUD(0); buildObjectives();
   G.screen = 'result'; show('touch', false); $('prompt').hidden = true;
+  if ($('tut-banner')) $('tut-banner').hidden = true;
   G.dailyRes = null;
+  if (i === -1) {
+    if (R && R.ok) {
+      PROG.tutDone = true;
+      if (!PROG.actions) PROG.actions = { crouch: true, pebble: true, hide: true };
+      PROG.actions.crouch = true; PROG.actions.pebble = true; PROG.actions.hide = true;
+      PROG.crouch = true; PROG.pebble = true; PROG.hide = true;
+      saveProg();
+    }
+    G.newRec = false;
+    show('result', true); fillResult();
+    $(R && R.ok ? 'b-next' : 'b-retry').focus();
+    return;
+  }
   if (R.ok) { arenaAward('first', 'awFirst'); if (R.stars.every(Boolean)) arenaAward('ghost', 'awGhost'); }
   if (R.ok && G.daily) { if (!FLAG.auto && !FLAG.nosave) G.dailyRes = G.daily.complete(R.stars.filter(Boolean).length); G.newRec = false; } // daily: campaign save untouched
   else if (R.ok) {
@@ -4203,6 +4474,21 @@ function showResult() {
 }
 function fillResult() {
   const S = G.S, R = S.result, i = G.idx, D = S.L.D;
+  if (i === -1) {
+    $('r-title').textContent = t(R.ok ? 'tutComplete' : 'res_fail');
+    $('r-title').style.color = R.ok ? 'var(--gold2)' : 'var(--red)';
+    $('r-stars').innerHTML = [true, true, true].map(s => starSvg(R.ok ? s : false)).join('');
+    $('r-sub').textContent = R.ok ? t('tutCompleteSub') : t('res_failSub');
+    const ln = (ok, icon, txt) => `<div class="${ok ? 'y' : 'n'}"><svg><use href="#${ok ? 'i-check' : 'i-x'}"/></svg><svg style="color:var(--gold2)"><use href="#${icon}"/></svg>${txt}</div>`;
+    $('r-slist').innerHTML = ln(true, 'i-crouch', t('tutStep1')) + ln(true, 'i-pebble', t('tutStep2')) + ln(true, 'i-hand', t('tutStep3'));
+    $('r-kv').innerHTML = `<div><b>${fmtT(R.time)}</b><span>${t('kv_time')}</span></div><div><b>${R.alerts}</b><span>${t('kv_alerts')}</span></div><div><b>${R.caught}</b><span>${t('kv_caught')}</span></div><div><b>${PROG.tutDone ? '1' : '0'}/1</b><span>${t('tutPart')}</span></div>`;
+    $('r-rec').hidden = true;
+    $('b-next').hidden = !R.ok;
+    $('t-next').textContent = t('startM1');
+    $('b-rshare').hidden = true;
+    $('r-daily').hidden = true;
+    return;
+  }
   $('r-title').textContent = t(R.ok ? 'res_ok' : 'res_fail'); $('r-title').style.color = R.ok ? 'var(--gold2)' : 'var(--red)';
   $('r-stars').innerHTML = R.stars.map(s => starSvg(s)).join('');
   $('r-sub').textContent = R.ok ? t('res_okSub', { m: (i + 1) + '. ' + mName(i), t: fmtT(R.time) }) : t('res_failSub');
@@ -4240,7 +4526,7 @@ function shareResult(end) {
   Arena.share({ title: 'Topkapı Gecesi', lines, url: ARENA_URL });
 }
 function arenaAward(id, key) { if (window.Arena && !FLAG.auto && !FLAG.nosave) Arena.award('topkapi-gecesi:' + id, 'Topkapı Gecesi · ' + t(key)); }
-function nextMission() { if (G.idx >= NM - 1) openEnd(); else startMission(G.idx + 1); }
+function nextMission() { if (G.idx === -1) startMission(0); else if (G.idx >= NM - 1) openEnd(); else startMission(G.idx + 1); }
 function openEnd() {
   G.daily = null; hideAll(); G.screen = 'end'; G.paused = false;
   if (window.Arena) { const others = Arena.games.filter(g => g !== 'topkapi-gecesi'); $('e-another').href = 'https://furkiozknn.github.io/' + others[Math.floor(Math.random() * others.length)] + '/'; } else { $('b-eshare').hidden = true; $('e-another').hidden = true; }
@@ -4273,9 +4559,12 @@ function updateHUD(dt) {
   const nr = C.stepNoise(P.gait === 'idle' ? (P.crouch ? 'crouch' : 'walk') : P.gait, P.surf);
   $('h-surf').textContent = hid ? '' : t('surf_' + P.surf) + ' · ' + (nr > 0 ? t('ring_m', { r: nr.toFixed(1) }) : t('ring_silent'));
   $('h-surf').style.color = P.surf === 'gravel' || P.surf === 'wood' || nr >= 4 ? 'var(--amber)' : '';
+  if (G.idx === -1) updateTutBanner();
+  if ($('t-crouch')) $('t-crouch').style.opacity = canAction('crouch') ? '1' : '0.4';
+  if ($('t-throw')) $('t-throw').style.opacity = canAction('pebble') ? '1' : '0.4';
   // interaction prompt
   const F = hid ? { kind: 'unhide' } : C.focus(S);
-  if (F && !S.over) {
+  if (F && !S.over && (F.kind !== 'hide' || canAction('hide'))) {
     let key = '';
     if (F.kind === 'unhide') key = 'pr_unhide';
     else if (F.kind === 'item') { const it = S.L.items[F.i]; key = it.kind === 'clue' ? 'pr_clue' : it.kind === 'bulb' ? 'pr_bulb' : 'pr_letter'; }
@@ -4509,6 +4798,7 @@ function update(dt) {
   if (FLAG.auto && G.ready) autoUpdate(dt);
   const S = G.S; if (!S) return;
   if (G.screen === 'play' && !G.paused) {
+    if (G.idx === -1) updateTutorialFlow(S, dt);
     G.acc += dt * (G.simming ? 1 : G.speed); let n = 0;
     while (G.acc >= C.DT && n < 12) {
       const I = G.bot ? C.botInput(S, G.bot) : readInput(S);
@@ -4532,11 +4822,12 @@ window.topkapi = {};
 function exportState() {
   const S = G.S;
   Object.assign(window.topkapi, {
-    screen: G.screen, mission: G.screen === 'play' || G.screen === 'result' ? G.idx + 1 : 0, paused: G.paused, time: S ? +S.t.toFixed(1) : 0,
+    screen: G.screen, mission: G.screen === 'play' || G.screen === 'result' ? (G.idx === -1 ? 0 : G.idx + 1) : 0, paused: G.paused, time: S ? +S.t.toFixed(1) : 0,
     player: S ? { x: +S.p.x.toFixed(2), z: +S.p.z.toFixed(2), vis: +S.p.vis.toFixed(2), gait: S.p.gait, hidden: S.p.hidden >= 0, pebbles: S.pebbles } : null,
     guards: S ? S.guards.map(g => ({ type: g.type, state: g.state, sus: +g.sus.toFixed(2) })) : [], clues: S ? S.clues + '/' + S.need : '',
     result: S && S.result ? { ok: S.result.ok, time: +S.result.time.toFixed(1), stars: S.result.stars } : null,
     stars: Array.from({ length: NM }, (_, i) => starsOf(i)), totalStars: totalStars(), done: Array.from({ length: NM }, (_, i) => !!PROG.done[i]),
+    tutDone: !!PROG.tutDone, actions: PROG.actions || { crouch: false, pebble: false, hide: false },
     bot: { auto: FLAG.auto, done: AUTO.done, log: BOTLOG.slice() }, fps: DBG.fps, drawCalls: DBG.calls, triangles: DBG.tris, gpu: DBG.gpu,
     errors: window.__errs.slice(), assets: ASSETS, quality: SET.quality, lang: SET.lang,
   });
@@ -4549,7 +4840,7 @@ window.topkapiSim = (seconds) => {
 window.topkapiDebug = { get reducedMotion() { return window.Arena ? RM_ON : RMQ.matches; }, G, C, startMission, openMap, openEnd, showResult, togglePause, openSettings, setQuality, PROG, toTitle, WORLD, CAM };
 function debugText() {
   const e = window.__errs, S = G.S;
-  $('dbg').innerHTML = `fps ${DBG.fps}  calls ${DBG.calls}  tris ${DBG.tris}\n${DBG.gpu}\nscreen ${G.screen}  mission ${G.screen === 'play' ? G.idx + 1 : '-'}  t ${S ? S.t.toFixed(0) : 0}  vis ${S ? S.p.vis.toFixed(2) : 0}\nbot ${FLAG.auto ? BOTLOG.length + ' runs' : 'off'} ${AUTO.done ? 'DONE' : ''}  stars ${totalStars()}` +
+  $('dbg').innerHTML = `fps ${DBG.fps}  calls ${DBG.calls}  tris ${DBG.tris}\n${DBG.gpu}\nscreen ${G.screen}  mission ${G.screen === 'play' ? (G.idx === -1 ? 0 : G.idx + 1) : '-'}  t ${S ? S.t.toFixed(0) : 0}  vis ${S ? S.p.vis.toFixed(2) : 0}\nbot ${FLAG.auto ? BOTLOG.length + ' runs' : 'off'} ${AUTO.done ? 'DONE' : ''}  stars ${totalStars()}` +
     (e.length ? `\n<span class="err">${e.slice(-4).map(s => String(s).replace(/</g, '&lt;')).join('\n')}</span>` : '\nerrors 0');
 }
 
@@ -4562,7 +4853,8 @@ applyTexts(); auVolumes();
 hideAll(); show('title', true);
 function ready() {
   if (G.ready) return; G.ready = true; $('loadmsg').textContent = ''; $('b-play').disabled = false; $('b-daily').disabled = false;
-  if (FLAG.mission >= 1 && FLAG.mission <= NM && !FLAG.auto) startMission(FLAG.mission - 1);
+  if (FLAG.mission === 0 && !FLAG.auto) startMission(-1);
+  else if (FLAG.mission >= 1 && FLAG.mission <= NM && !FLAG.auto) startMission(FLAG.mission - 1);
   else if (FLAG.screen === 'map') openMap(); else if (FLAG.screen === 'end') openEnd();
   if (FLAG.sim > 0) window.topkapiSim(FLAG.sim);
   if (!FLAG.auto && G.screen === 'title') $('b-play').focus();
