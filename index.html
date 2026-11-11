@@ -473,6 +473,8 @@ b, .num { font-variant-numeric: tabular-nums; }
   .vtext b { font-size: 13px; }
   .vtext span { font-size: 11px; }
   .tools { gap: 8px; margin-top: 4px; padding-top: 4px; font-size: 11.5px; }
+  .tbtns { bottom: calc(10px + var(--sa-b)); right: calc(10px + var(--sa-r)); grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(2, 56px); gap: 6px; }
+  .tb { width: 56px; height: 56px; min-width: 56px; min-height: 56px; }
 }
 
 /* Prompt, Note Card & Toasts */
@@ -509,9 +511,13 @@ b, .num { font-variant-numeric: tabular-nums; }
 @media (pointer: coarse) {
   .prompt kbd { display: none; }
   .prompt { bottom: calc(184px + var(--sa-b)); }
+  .ibtn { width: 56px; height: 56px; min-width: 56px; min-height: 56px; }
+  .acts { gap: 8px; }
+  .tb { width: 56px; height: 56px; min-width: 56px; min-height: 56px; }
 }
 @media (pointer: coarse) and (max-width: 760px) {
   .prompt { bottom: calc(248px + var(--sa-b)); font-size: 13.5px; padding: 8px 16px; }
+  .ibtn { width: 56px; height: 56px; min-width: 56px; min-height: 56px; }
 }
 
 /* Tutorial prompt overlay & action guidance */
@@ -715,13 +721,15 @@ b, .num { font-variant-numeric: tabular-nums; }
   right: calc(16px + var(--sa-r));
   bottom: calc(18px + var(--sa-b));
   display: grid;
-  grid-template-columns: repeat(3, 58px);
-  grid-template-rows: repeat(2, 58px);
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(2, 56px);
   gap: 10px;
 }
 .tb {
-  width: 58px;
-  height: 58px;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
   border-radius: 50%;
   border: 1.5px solid var(--line);
   background: var(--lacquer);
@@ -731,7 +739,7 @@ b, .num { font-variant-numeric: tabular-nums; }
   align-items: center;
   justify-content: center;
   font-family: var(--font-body);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
   color: var(--ink);
   touch-action: none;
@@ -1824,6 +1832,7 @@ input[type=range] {
     <label class="sl"><span data-t="effects"></span><input type="range" id="r-sfx" min="0" max="1" step="0.05" data-tt="effects"></label>
     <div class="row"><span class="lbl" data-t="language"></span><div class="seg" id="seg-lang2"><button data-l="tr">TR</button><button data-l="en">EN</button></div></div>
     <div class="row"><span class="lbl" data-t="quality"></span><div class="seg" id="seg-q"><button data-q="low" data-t="low"></button><button data-q="high" data-t="high"></button></div></div>
+    <div class="row"><span class="lbl" data-t="oneHand"></span><div class="seg" id="seg-onehand"><button data-oh="off" data-t="off"></button><button data-oh="on" data-t="on"></button></div></div>
     <div class="row"><span class="lbl" data-t="fullscreen"></span><button class="btn" id="b-full"><svg><use href="#i-fs"/></svg><span data-t="toggle"></span></button></div>
     <div class="row"><span class="lbl" data-t="a11y"></span><button class="btn" id="b-a11y"><span data-t="a11yOpen"></span></button></div>
     <button class="btn primary w" id="b-setback"><span data-t="back"></span></button>
@@ -2892,7 +2901,7 @@ const Q = new URLSearchParams(location.search);
 const FLAG = {
   auto: Q.has('auto'), debug: Q.has('debug'), low: Q.has('low'), sim: parseFloat(Q.get('sim') || '0') || 0, lang: Q.get('lang'),
   nosave: Q.has('nosave'), noassets: Q.has('noassets'), mission: Q.has('mission') ? parseInt(Q.get('mission'), 10) : null, speed: parseFloat(Q.get('speed') || '0') || 0,
-  screen: Q.get('screen'),
+  screen: Q.get('screen'), oneHand: Q.has('onehand') || Q.has('oneHand'),
 };
 // Every mesh, texture and sound is generated in code; there are no asset files, so ?noassets changes nothing.
 const ASSETS = { used: false, loaded: [], skipped: FLAG.noassets, note: 'procedural only' };
@@ -2901,9 +2910,12 @@ function load(k, def) { try { const v = localStorage.getItem(KEY + k); return v 
 function store(k, v) { if (FLAG.nosave || FLAG.auto) return; try { localStorage.setItem(KEY + k, JSON.stringify(v)); } catch (e) { /* private mode */ } }
 const isPhone = matchMedia('(pointer:coarse)').matches && Math.min(screen.width, screen.height) < 820;
 const navLang = /^tr/i.test(navigator.language || '') ? 'tr' : 'en';
-const SET = load('settings', { master: 0.8, music: 0.6, sfx: 0.8, lang: navLang, quality: isPhone ? 'low' : 'high', musicOn: true, sfxOn: true, muted: false });
+const SET = load('settings', { master: 0.8, music: 0.6, sfx: 0.8, lang: navLang, quality: isPhone ? 'low' : 'high', musicOn: true, sfxOn: true, muted: false, oneHand: false });
 if (FLAG.lang === 'tr' || FLAG.lang === 'en') SET.lang = FLAG.lang;
 if (FLAG.low) SET.quality = 'low';
+if (FLAG.oneHand) SET.oneHand = true;
+const settings = SET;
+window.settings = SET;
 const PROG = load('save', { stars: [], done: [], last: 0, times: [], tutDone: false, actions: { crouch: false, pebble: false, hide: false } });
 const BEST = load('best', { stars: 0, missions: 0 });
 if (FLAG.auto || FLAG.nosave) { PROG.stars = []; PROG.done = []; PROG.last = 0; PROG.times = []; }
@@ -2943,7 +2955,7 @@ const I18N = {
     mission: 'Görev', toDawn: 'Şafağa', pauseBtn: 'Duraklat (P)', soundBtn: 'Ses (M müzik, X efekt)', langBtn: 'Dil (L)', objectives: 'Görevler', visibility: 'Görünürlük',
     crouchS: 'Çömel', throwS: 'Taş', useS: 'Kullan', runS: 'Koş', dashS: 'Atıl', pauseS: 'Dur',
     paused: 'Duraklatıldı', resume: 'Devam', restart: 'Görevi Baştan Al', mainMenu: 'Ana Menü', master: 'Ana ses', music: 'Müzik', effects: 'Efektler',
-    language: 'Dil', quality: 'Kalite', low: 'Düşük', high: 'Yüksek', fullscreen: 'Tam ekran', toggle: 'Aç / kapat', back: 'Geri', retry: 'Tekrar',
+    language: 'Dil', quality: 'Kalite', low: 'Düşük', high: 'Yüksek', oneHand: 'Tek El / Otomatik', on: 'Açık', off: 'Kapalı', fullscreen: 'Tam ekran', toggle: 'Aç / kapat', back: 'Geri', retry: 'Tekrar',
     next: 'Sonraki Görev', toEnding: 'Şafak', start: 'Göreve Başla', locked: 'Kilitli: önceki görevi bitir', par: 'Hedef süre: {s}', bestStars: 'En iyi',
     part: 'Bölüm {n}: {p}', guardsN: '{n} muhafız', pebblesN: '3 çakıl taşı',
     guard_bostanci: 'Bostancı', guard_yeniceri: 'Yeniçeri', guard_eunuch: 'Harem Ağası', guard_cook: 'Has Aşçıbaşı', guard_cat: 'Saray Kedisi', guard_halb: 'Bostancı',
@@ -2989,7 +3001,7 @@ const I18N = {
     mission: 'Mission', toDawn: 'Dawn in', pauseBtn: 'Pause (P)', soundBtn: 'Sound (M music, X effects)', langBtn: 'Language (L)', objectives: 'Objectives', visibility: 'Visibility',
     crouchS: 'Crouch', throwS: 'Pebble', useS: 'Use', runS: 'Run', dashS: 'Dash', pauseS: 'Pause',
     paused: 'Paused', resume: 'Resume', restart: 'Restart Mission', mainMenu: 'Main Menu', master: 'Master', music: 'Music', effects: 'Effects',
-    language: 'Language', quality: 'Quality', low: 'Low', high: 'High', fullscreen: 'Fullscreen', toggle: 'Toggle', back: 'Back', retry: 'Retry',
+    language: 'Language', quality: 'Quality', low: 'Low', high: 'High', oneHand: 'One-Hand Aim', on: 'On', off: 'Off', fullscreen: 'Fullscreen', toggle: 'Toggle', back: 'Back', retry: 'Retry',
     next: 'Next Mission', toEnding: 'Dawn', start: 'Start Mission', locked: 'Locked: finish the previous mission', par: 'Target time: {s}', bestStars: 'Best',
     part: 'Part {n}: {p}', guardsN: '{n} palace guards', pebblesN: '3 pebbles',
     guard_bostanci: 'Bostancı Guard', guard_yeniceri: 'Janissary Guard', guard_eunuch: 'Harem Guard', guard_cook: 'Head Palace Cook', guard_cat: 'Palace Cat', guard_halb: 'Bostancı Guard',
@@ -4058,11 +4070,134 @@ function ring(x, z, r, color, step = false) {
 }
 
 // ---------------------------------------------------------------------------
+// Auto-aim pebble helper & vision cone detection
+// ---------------------------------------------------------------------------
+function inGuardCone(g, x, z, L) {
+  if (!g) return false;
+  const T = C.GT[g.type] || C.GUARD_TYPES[g.type] || { fov: 50, near: 2.3, far: 10.5 };
+  const mul = g.state === 'alert' ? 1.35 : g.state === 'sus' ? 1.12 : 1;
+  const rMax = (T.far || 10.5) * mul;
+  const dx = x - g.x, dz = z - g.z;
+  const d = Math.hypot(dx, dz);
+  if (d > rMax) return false;
+  if (d < 0.45) return true;
+  const fov = ((T.fov || 50) + 4) * D2R;
+  const ang = Math.abs(C.angDiff(g.h, Math.atan2(dz, dx)));
+  if (ang > fov) return false;
+  return C.los(L, g.x, g.z, x, z);
+}
+
+function findAutoAimTarget(S = G.S) {
+  if (!S || !S.p || !S.L) return null;
+  const P = S.p, L = S.L;
+  const guards = (S.guards || []).filter(g => g && g.type !== 'cat');
+  guards.sort((a, b) => Math.hypot(a.x - P.x, a.z - P.z) - Math.hypot(b.x - P.x, b.z - P.z));
+
+  let bestNode = null;
+  let bestScore = Infinity;
+  const defX = P.x + Math.cos(P.face) * 6.5;
+  const defZ = P.z + Math.sin(P.face) * 6.5;
+
+  for (let i = 0; i < L.N; i++) {
+    if (!L.gwalk[i]) continue;
+    const nx = C.ccx(L, i), nz = C.ccz(L, i);
+    const dp = Math.hypot(nx - P.x, nz - P.z);
+    if (dp > 9.0 || dp < 1.8) continue;
+    if (!C.los(L, P.x, P.z, nx, nz)) continue;
+
+    let inAnyCone = false;
+    for (let k = 0; k < guards.length; k++) {
+      if (inGuardCone(guards[k], nx, nz, L)) {
+        inAnyCone = true;
+        break;
+      }
+    }
+    if (inAnyCone) continue;
+
+    let score = 1000;
+    let distractorFound = false;
+
+    for (let k = 0; k < guards.length; k++) {
+      const g = guards[k];
+      const dg = Math.hypot(nx - g.x, nz - g.z);
+      if (dg <= 7.2 && dg >= 1.2) {
+        if (C.hears(S, { x: nx, z: nz, r: 7.5 }, g.x, g.z)) {
+          const guardWeight = k * 12;
+          const s = guardWeight + dg * 1.5 - (dp * 0.4);
+          if (s < score) {
+            score = s;
+            distractorFound = true;
+          }
+        }
+      }
+    }
+
+    if (!distractorFound) {
+      const df = Math.hypot(nx - defX, nz - defZ);
+      score = 200 + df;
+    }
+
+    if (score < bestScore) {
+      bestScore = score;
+      bestNode = { x: nx, z: nz };
+    }
+  }
+
+  if (!bestNode) {
+    let ex = P.x, ez = P.z;
+    const fx = Math.cos(P.face), fz = Math.sin(P.face);
+    for (let s = 1.0; s <= 6.5; s += 0.5) {
+      const tx = P.x + fx * s, tz = P.z + fz * s, c = C.cellAt(L, tx, tz);
+      if (c < 0 || L.tall[c] || L.solid[c]) break;
+      ex = tx; ez = tz;
+    }
+    bestNode = { x: ex, z: ez };
+  }
+  return bestNode;
+}
+
+function throwPebble(target = null, S = G.S, immediate = false) {
+  if (!S || S.over || (G.paused && !immediate)) return null;
+  if (!canAction('pebble')) { toast(t('actLocked'), 'bad', 2000); return null; }
+  if (S.pebbles <= 0) { toast(t('noPeb'), 'bad'); return null; }
+
+  let pt = target;
+  if (!pt) {
+    const isTouchOrOneHand = SET.oneHand || (INP.touch && (!drag || !drag.moved)) || !WORLD.reticle.visible;
+    if (isTouchOrOneHand) {
+      pt = findAutoAimTarget(S);
+    } else if (WORLD.reticle.visible) {
+      pt = { x: WORLD.reticle.position.x, z: WORLD.reticle.position.z };
+    }
+    if (!pt) pt = findAutoAimTarget(S) || { x: S.p.x + Math.cos(S.p.face) * 7, z: S.p.z + Math.sin(S.p.face) * 7 };
+  }
+
+  INP.throwTarget = pt;
+  INP.throwQ = true;
+
+  if (immediate && S.pebbles > 0 && !S.pebble) {
+    const P = S.p, L = S.L;
+    let dx = pt.x - P.x, dz = pt.z - P.z, d = Math.hypot(dx, dz);
+    if (d > 0.5) {
+      if (d > 9) { dx *= 9 / d; dz *= 9 / d; d = 9; }
+      let ex = P.x, ez = P.z; const n = Math.ceil(d / 0.25);
+      for (let k = 1; k <= n; k++) { const x = P.x + dx * k / n, z = P.z + dz * k / n, c = C.cellAt(L, x, z); if (c < 0 || L.tall[c] || (L.solid[c] && !L.water.includes(c))) break; ex = x; ez = z; }
+      S.pebble = { x0: P.x, z0: P.z, x1: ex, z1: ez, t: 0, dur: 0.3 + Math.hypot(ex - P.x, ez - P.z) * 0.045 };
+      S.pebbles--; S.stats.pebbles++;
+      S.events.push({ k: 'throw' });
+      INP.throwQ = false;
+      INP.throwTarget = null;
+    }
+  }
+  return pt;
+}
+
+// ---------------------------------------------------------------------------
 // Camera and input
 // ---------------------------------------------------------------------------
 const CAM = { yaw: 0, pitch: 1.05, dist: 17, tx: 0, tz: 0, ty: 0.8, mode: 'follow', t: 0 };
 const KEYS = new Set();
-const INP = { interact: false, dash: false, throwQ: false, crouchT: false, mouse: null, mouseT: -99, touch: false, sx: 0, sy: 0, run: false, crouchHold: false };
+const INP = { interact: false, dash: false, throwQ: false, throwTarget: null, crouchT: false, mouse: null, mouseT: -99, touch: false, sx: 0, sy: 0, run: false, crouchHold: false };
 const RAY = new THREE.Raycaster(), NDC = new THREE.Vector2(), PLANE = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), HIT = new THREE.Vector3();
 function readInput(S) {
   let ix = 0, iy = 0;
@@ -4079,11 +4214,21 @@ function readInput(S) {
       toast(t('actLocked'), 'bad', 2000);
     } else {
       const P = S.p;
-      if (WORLD.reticle.visible) I.throwAt = { x: WORLD.reticle.position.x, z: WORLD.reticle.position.z };
-      else I.throwAt = { x: P.x + Math.cos(P.face) * 7, z: P.z + Math.sin(P.face) * 7 };
+      if (INP.throwTarget) {
+        I.throwAt = INP.throwTarget;
+      } else {
+        const isTouchOrOneHand = SET.oneHand || (INP.touch && (!drag || !drag.moved)) || !WORLD.reticle.visible;
+        if (isTouchOrOneHand) {
+          I.throwAt = findAutoAimTarget(S);
+        } else if (WORLD.reticle.visible) {
+          I.throwAt = { x: WORLD.reticle.position.x, z: WORLD.reticle.position.z };
+        }
+        if (!I.throwAt) I.throwAt = findAutoAimTarget(S) || { x: P.x + Math.cos(P.face) * 7, z: P.z + Math.sin(P.face) * 7 };
+      }
       if (S.pebbles <= 0) toast(t('noPeb'), 'bad');
     }
   }
+  INP.throwTarget = null;
   INP.interact = INP.dash = INP.throwQ = false;
   return I;
 }
@@ -4165,7 +4310,17 @@ function showTouch() { if (INP.touch) return; INP.touch = true; if (G.screen ===
   const up = e => { if (e.pointerId !== id) return; id = null; kn.style.transform = ''; INP.sx = INP.sy = 0; };
   st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
   const tap = (el, fn) => el.addEventListener('pointerdown', e => { audioInit(); e.preventDefault(); fn(); });
-  tap($('t-use'), () => { INP.interact = true; }); tap($('t-throw'), () => { INP.throwQ = true; }); tap($('t-dash'), () => { INP.dash = true; });
+  let lastPebbleTap = 0;
+  const onPebbleTap = () => {
+    const now = performance.now();
+    if (now - lastPebbleTap < 180) return;
+    lastPebbleTap = now;
+    throwPebble();
+  };
+  tap($('t-use'), () => { INP.interact = true; });
+  tap($('t-throw'), onPebbleTap);
+  $('t-throw').addEventListener('click', e => { e.preventDefault(); onPebbleTap(); });
+  tap($('t-dash'), () => { INP.dash = true; });
   tap($('t-crouch'), () => {
     if (!canAction('crouch')) { toast(t('actLocked'), 'bad', 2000); return; }
     INP.crouchT = !INP.crouchT; $('t-crouch').classList.toggle('on', INP.crouchT);
@@ -4397,6 +4552,7 @@ function applyTexts() {
   $('b-lang').textContent = SET.lang === 'tr' ? 'EN' : 'TR';
   for (const s of ['seg-lang', 'seg-lang2']) for (const b of $(s).children) b.classList.toggle('on', b.dataset.l === SET.lang);
   for (const b of $('seg-q').children) b.classList.toggle('on', b.dataset.q === SET.quality);
+  if ($('seg-onehand')) for (const b of $('seg-onehand').children) b.classList.toggle('on', (b.dataset.oh === 'on') === !!SET.oneHand);
   $('r-master').value = SET.master; $('r-music').value = SET.music; $('r-sfx').value = SET.sfx;
   const done = PROG.done.filter(Boolean).length;
   $('bestline').textContent = done ? t('bestLine', { s: totalStars(), n: done }) : t('bestNone');
@@ -4813,9 +4969,28 @@ function render(dt) {
     if (WORLD.ped) { WORLD.ped.real.rotation.y = T * 0.8; WORLD.ped.fake.rotation.y = T * 0.3; if (WORLD.ped.real.visible && Math.random() < dt * 10) emit(S.L.pedestal.x + (Math.random() - 0.5) * 0.5, 1.6 + Math.random() * 0.4, S.L.pedestal.z + (Math.random() - 0.5) * 0.5, 0, 0.3, 0, 0.8, 0.25, 0xdff2ff, 1); }
     // pebble in flight and the aim reticle
     if (S.pebble) { const B = S.pebble, u = B.t / B.dur; WORLD.pebble.visible = true; WORLD.pebble.position.set(lerp(B.x0, B.x1, u), 1.2 + Math.sin(u * Math.PI) * 1.6 - u * 1.1, lerp(B.z0, B.z1, u)); } else WORLD.pebble.visible = false;
-    const aim = G.screen === 'play' && !G.paused && !G.bot && INP.mouse && !INP.touch && S.pebbles > 0 && P.hidden < 0 && G.time - INP.mouseT < 6;
+    const mouseAim = G.screen === 'play' && !G.paused && !G.bot && INP.mouse && !INP.touch && S.pebbles > 0 && P.hidden < 0 && G.time - INP.mouseT < 6;
+    const isAutoAim = G.screen === 'play' && !G.paused && !G.bot && S.pebbles > 0 && P.hidden < 0 && (SET.oneHand || (INP.touch && (!drag || !drag.moved)));
     WORLD.reticle.visible = false;
-    if (aim) { RAY.setFromCamera(NDC, camera); if (RAY.ray.intersectPlane(PLANE, HIT)) { let dx = HIT.x - P.x, dz = HIT.z - P.z; const d = Math.hypot(dx, dz); if (d > 9) { dx *= 9 / d; dz *= 9 / d; } WORLD.reticle.position.set(P.x + dx, 0.08, P.z + dz); WORLD.reticle.visible = d > 0.8; } }
+    if (mouseAim && !SET.oneHand) {
+      RAY.setFromCamera(NDC, camera);
+      if (RAY.ray.intersectPlane(PLANE, HIT)) {
+        let dx = HIT.x - P.x, dz = HIT.z - P.z;
+        const d = Math.hypot(dx, dz);
+        if (d > 9) { dx *= 9 / d; dz *= 9 / d; }
+        WORLD.reticle.position.set(P.x + dx, 0.08, P.z + dz);
+        WORLD.reticle.scale.set(1, 1, 1);
+        WORLD.reticle.visible = d > 0.8;
+      }
+    } else if (isAutoAim) {
+      const tgt = findAutoAimTarget(S);
+      if (tgt) {
+        WORLD.reticle.position.set(tgt.x, 0.08, tgt.z);
+        const pulse = 1.0 + 0.08 * Math.sin(T * 8);
+        WORLD.reticle.scale.set(pulse, pulse, pulse);
+        WORLD.reticle.visible = true;
+      }
+    }
     // flames
     const fg = WORLD.flames.geometry, fs = fg.attributes.size.array, fa = fg.attributes.alpha.array;
     S.L.lights.forEach((l, k) => { const on = S.lit[k]; const fl = 0.85 + 0.15 * Math.sin(T * 11 + k * 3) + Math.random() * 0.08; fs[k * 2] = on ? 3.4 * fl : 0; fs[k * 2 + 1] = on ? (l.kind === 'brazier' ? 1.1 : 0.7) * fl : 0; fa[k * 2] = on ? 0.32 : 0; fa[k * 2 + 1] = on ? 0.95 : 0;
@@ -4881,6 +5056,7 @@ $('b-sound').addEventListener('click', () => { audioInit(); SET.muted = !SET.mut
 $('b-lang').addEventListener('click', () => setLang(SET.lang === 'tr' ? 'en' : 'tr'));
 for (const s of ['seg-lang', 'seg-lang2']) $(s).addEventListener('click', e => { const b = e.target.closest('button'); if (b) setLang(b.dataset.l); });
 $('seg-q').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setQuality(b.dataset.q); });
+if ($('seg-onehand')) $('seg-onehand').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { SET.oneHand = b.dataset.oh === 'on'; saveSettings(); applyTexts(); } });
 $('b-full').addEventListener('click', () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); } catch (e) { /* not allowed */ } });
 for (const [id, key] of [['r-master', 'master'], ['r-music', 'music'], ['r-sfx', 'sfx']]) $(id).addEventListener('input', e => { SET[key] = +e.target.value; saveSettings(); auVolumes(); });
 // Hidden tab: rendering and audio always stop; the pause menu follows the arena-kit "pause when the tab is hidden"
@@ -4945,7 +5121,11 @@ if (FLAG.debug) {
   $('dbg').hidden = false;
   try { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); DBG.gpu = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'unknown'; } catch (e) { DBG.gpu = '?'; }
 }
-window.topkapi = { MISSIONS: C.MISSIONS, GUARD_TYPES: C.GUARD_TYPES };
+window.topkapi = { MISSIONS: C.MISSIONS, GUARD_TYPES: C.GUARD_TYPES, throwPebble, findAutoAimTarget, inGuardCone, settings: SET };
+window.throwPebble = throwPebble;
+window.findAutoAimTarget = findAutoAimTarget;
+C.throwPebble = throwPebble;
+C.findAutoAimTarget = findAutoAimTarget;
 function exportState() {
   const S = G.S;
   Object.assign(window.topkapi, {
@@ -4960,6 +5140,7 @@ function exportState() {
     missions: C.MISSIONS, guardTypes: C.GUARD_TYPES,
     bot: { auto: FLAG.auto, done: AUTO.done, log: BOTLOG.slice() }, fps: DBG.fps, drawCalls: DBG.calls, triangles: DBG.tris, gpu: DBG.gpu,
     errors: window.__errs.slice(), assets: ASSETS, quality: SET.quality, lang: SET.lang,
+    settings: SET, oneHand: !!SET.oneHand, throwPebble, findAutoAimTarget,
   });
 }
 window.topkapiSim = (seconds) => {
@@ -4967,7 +5148,7 @@ window.topkapiSim = (seconds) => {
   for (let i = 0; i < n; i++) { update(1 / 60); if (FLAG.auto && AUTO.done) break; }
   G.simming = false; exportState(); return window.topkapi;
 };
-window.topkapiDebug = { get reducedMotion() { return window.Arena ? RM_ON : RMQ.matches; }, G, C, startMission, openMap, openEnd, showResult, togglePause, openSettings, setQuality, PROG, toTitle, WORLD, CAM };
+window.topkapiDebug = { get reducedMotion() { return window.Arena ? RM_ON : RMQ.matches; }, G, C, startMission, openMap, openEnd, showResult, togglePause, openSettings, setQuality, PROG, toTitle, WORLD, CAM, throwPebble, findAutoAimTarget, inGuardCone };
 function debugText() {
   const e = window.__errs, S = G.S;
   $('dbg').innerHTML = `fps ${DBG.fps}  calls ${DBG.calls}  tris ${DBG.tris}\n${DBG.gpu}\nscreen ${G.screen}  mission ${G.screen === 'play' ? (G.idx === -1 ? 0 : G.idx + 1) : '-'}  t ${S ? S.t.toFixed(0) : 0}  vis ${S ? S.p.vis.toFixed(2) : 0}\nbot ${FLAG.auto ? BOTLOG.length + ' runs' : 'off'} ${AUTO.done ? 'DONE' : ''}  stars ${totalStars()}` +
