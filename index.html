@@ -3254,6 +3254,7 @@ function worldMat(opts = {}, cutaway = true) {
   return m;
 }
 const MAT = { world: worldMat(), floor: worldMat({}, false), outside: worldMat({}, false) };
+MAT.world.shared = MAT.floor.shared = MAT.outside.shared = true; // shared across level rebuilds and persistent far shore
 
 // geometry builder: merges primitives into one non-indexed geometry with per-face colour jitter and a glow attribute
 let seedV = 12345;
@@ -3447,7 +3448,8 @@ const ARCH = {
   cypress: new THREE.LatheGeometry([[0, 0], [0.4, 0.06], [0.58, 0.24], [0.62, 0.42], [0.54, 0.62], [0.38, 0.8], [0.18, 0.94], [0, 1]].map(p => new THREE.Vector2(p[0], p[1])), 9),
 };
 function clearLevel() {
-  for (const m of WORLD.meshes) { scene.remove(m); m.geometry && m.geometry.dispose(); if (m.material && m.material !== MAT.world && m.material !== MAT.floor && !m.material.shared) m.material.dispose(); }
+  // Keep shared world/floor/outside materials alive for the persistent far-shore mesh and subsequent missions
+  for (const m of WORLD.meshes) { scene.remove(m); m.geometry && m.geometry.dispose(); if (m.material && m.material !== MAT.world && m.material !== MAT.floor && m.material !== MAT.outside && !m.material.shared) m.material.dispose(); }
   WORLD.meshes = []; WORLD.baked = []; WORLD.cyp = [];
 }
 function add(m, list = WORLD.meshes) { scene.add(m); list.push(m); return m; }
