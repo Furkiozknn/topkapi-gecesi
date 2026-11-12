@@ -2898,9 +2898,17 @@ const NM = C.LEVELS.length;
 // Flags, storage, settings
 // ---------------------------------------------------------------------------
 const Q = new URLSearchParams(location.search);
+// ?mission=N (0 = tutorial, 1..NM = a mission) only when N is a plain integer in range; empty or non-numeric
+// values (?mission=, ?mission=abc, ?mission=2x) are null and the game opens the normal menu flow
+function missionFlag(v) {
+  const s = (v == null ? '' : String(v)).trim();
+  if (!/^\d+$/.test(s)) return null;
+  const n = parseInt(s, 10);
+  return n >= 0 && n <= NM ? n : null;
+}
 const FLAG = {
   auto: Q.has('auto'), debug: Q.has('debug'), low: Q.has('low'), sim: parseFloat(Q.get('sim') || '0') || 0, lang: Q.get('lang'),
-  nosave: Q.has('nosave'), noassets: Q.has('noassets'), mission: Q.has('mission') ? parseInt(Q.get('mission'), 10) : null, speed: parseFloat(Q.get('speed') || '0') || 0,
+  nosave: Q.has('nosave'), noassets: Q.has('noassets'), mission: missionFlag(Q.get('mission')), speed: parseFloat(Q.get('speed') || '0') || 0,
   screen: Q.get('screen'), oneHand: Q.has('onehand') || Q.has('oneHand'),
 };
 // Every mesh, texture and sound is generated in code; there are no asset files, so ?noassets changes nothing.
