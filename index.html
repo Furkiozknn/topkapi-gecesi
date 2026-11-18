@@ -5500,6 +5500,17 @@ function shareResult(end) {
   Arena.share({ title: 'Topkapı Gecesi', lines, url: ARENA_URL });
 }
 function arenaAward(id, key) { if (window.Arena && !FLAG.auto && !FLAG.nosave) Arena.award('topkapi-gecesi:' + id, 'Topkapı Gecesi · ' + t(key)); }
+// Portal ad hooks (G-050). Ads only at the natural break: when the player leaves the mission result card (next mission,
+// retry, palace map). On the game's own site (no portal SDK) afterBreak() runs the action synchronously, so the site plays
+// exactly as before. The ?auto bot calls nextMission() / startMission() directly and is not affected.
+// No rewarded hook: being caught already sends the thief back to the last checkpoint for free (the mission only fails at
+// dawn); paying an ad for that, or for more night time, would change the balance and the stars.
+let breakBusy = false;
+function afterBreak(f) {
+  if (!(window.Arena && Arena.portal && Arena.portal.name !== 'none')) return f(); // own site: synchronous, as before
+  if (breakBusy) return; breakBusy = true;
+  Arena.portal.midgame().catch(() => false).then(() => { breakBusy = false; f(); });
+}
 function nextMission() { if (G.idx === -1) startMission(0); else if (G.idx >= NM - 1) openEnd(); else startMission(G.idx + 1); }
 function openEnd() {
   G.daily = null; hideAll(); G.screen = 'end'; G.paused = false;
@@ -5737,9 +5748,9 @@ $('b-resume').addEventListener('click', () => togglePause(false));
 $('b-restart').addEventListener('click', () => { SFX.click(); startMission(G.idx); });
 $('b-pmap').addEventListener('click', () => { SFX.click(); openMap(G.idx); });
 $('b-menu').addEventListener('click', () => { SFX.click(); toTitle(); });
-$('b-rmap').addEventListener('click', () => { SFX.click(); openMap(G.idx); });
-$('b-retry').addEventListener('click', () => { SFX.click(); startMission(G.idx); });
-$('b-next').addEventListener('click', () => { SFX.click(); nextMission(); });
+$('b-rmap').addEventListener('click', () => { SFX.click(); afterBreak(() => openMap(G.idx)); });
+$('b-retry').addEventListener('click', () => { SFX.click(); afterBreak(() => startMission(G.idx)); });
+$('b-next').addEventListener('click', () => { SFX.click(); afterBreak(nextMission); });
 $('b-again').addEventListener('click', () => { SFX.click(); applySky('night', 0); openMap(); });
 $('b-emenu').addEventListener('click', () => { SFX.click(); applySky('night', 0); toTitle(); });
 $('b-pause').addEventListener('click', () => { audioInit(); togglePause(); });
