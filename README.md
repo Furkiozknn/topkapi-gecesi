@@ -135,6 +135,10 @@ The live state is on `window.topkapi` (screen, mission, player, guards, stars, b
 
 ![Gameplay before and after](docs/redesign-before-after-gameplay.png)
 
+## Version 1.1 (November 2026)
+
+New: a **Night Ledger** (best time and stars per mission plus lifetime stats, stored on this device only), a version tag with a "What's new" window, screen shake and phone vibration when you are caught (off with Reduce motion), a "More games" link on the title screen, a share card, an icon and a 404 page. Rules, missions, guard AI and saves are unchanged. Full list in Turkish: [CHANGELOG.md](CHANGELOG.md). New localStorage key: `arena.topkapi.stats`.
+
 ## Running locally
 
 Serve the folder over HTTP (ES modules do not load from `file://`):
@@ -144,6 +148,8 @@ python -m http.server 8000
 ```
 
 Then open <http://localhost:8000/>.
+
+Smoke test (needs `playwright-core` and a local Chromium; nothing is added to the repo): `node test/duman.mjs`, see the header of the file for `PW_MODULE` and `CHROMIUM`. The older `tools/smoke.mjs` checks the CDN integrity hashes.
 
 ## Made with Claude Code
 
