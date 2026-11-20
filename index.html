@@ -5,7 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="arena-game" content="topkapi-gecesi">
 <title>Topkapı Gecesi</title>
-<meta name="description" content="A 3D stealth game at night in an Ottoman palace: put the Spoon-maker's Diamond back before dawn. Claude Game Arena, built by Claude Opus 5.5.">
+<meta name="description" content="Osmanlı sarayında gece geçen 3D gizlilik oyunu: Kaşıkçı Elması'nı şafaktan önce yerine koy. Tarayıcıda ücretsiz, telefonda da oynanır. A 3D night stealth game in an Ottoman palace.">
+<meta name="theme-color" content="#050d1e">
+<link rel="canonical" href="https://furkiozknn.github.io/topkapi-gecesi/">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23050d1e'/%3E%3Cpath d='M20 14h24l12 14-24 26L8 28z' fill='%23E8C75C'/%3E%3Cpath d='M8 28h48M24 14l-4 14 12 26 12-26-4-14M20 28l12-14 12 14' fill='none' stroke='%23050d1e' stroke-width='2' opacity='.55'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Furki Özkan Oyunları">
+<meta property="og:title" content="Topkapı Gecesi: sarayda gece gizlilik oyunu">
+<meta property="og:description" content="Muhafızların görüş konilerinden saklan, fenerleri söndür, elması şafaktan önce yerine koy. 9 görev, 27 yıldız. Tarayıcıda ücretsiz.">
+<meta property="og:url" content="https://furkiozknn.github.io/topkapi-gecesi/">
+<meta property="og:image" content="https://furkiozknn.github.io/topkapi-gecesi/docs/02-gameplay.png">
+<meta property="og:locale" content="tr_TR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Topkapı Gecesi: sarayda gece gizlilik oyunu">
+<meta name="twitter:description" content="Muhafızların görüş konilerinden saklan, fenerleri söndür, elması şafaktan önce yerine koy. Tarayıcıda ücretsiz.">
+<meta name="twitter:image" content="https://furkiozknn.github.io/topkapi-gecesi/docs/02-gameplay.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
@@ -978,6 +992,48 @@ input[type=range] {
   .title .logo { width: 72px; height: 72px; }
   .title h1 { font-size: 32px; }
   .title .how { display: none; }
+}
+
+/* v1.1: title footer links, Gece Defteri / Yenilikler panel */
+.title .links { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 6px; margin-top: 12px; font-size: 12.5px; }
+.title .links a, .title .links button {
+  display: inline-flex; align-items: center; min-height: 36px; padding: 0 10px; border: 0; border-radius: 6px; background: none;
+  color: var(--gold2); font: inherit; font-weight: 600; letter-spacing: 0.02em; cursor: pointer; text-decoration: none;
+}
+.title .links a:hover, .title .links button:hover { background: rgba(201, 162, 39, 0.14); }
+.title .links a:focus-visible, .title .links button:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 1px; }
+.title .links .dotsep { color: var(--ink2); opacity: 0.6; align-self: center; }
+.title .footer { margin-top: 6px; }
+#news .panel { width: min(94vw, 520px); text-align: left; }
+#news h3 { margin: 18px 0 6px; font-family: var(--font-display); font-size: 15px; color: var(--gold2); letter-spacing: 0.04em; }
+#news ul { margin: 0; padding: 0 0 0 18px; font-size: 13.5px; line-height: 1.55; color: var(--vellum); }
+#news li { margin: 3px 0; }
+#news .bookkv { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 6px 0 10px; }
+#news .bookkv div { background: rgba(5, 14, 34, 0.5); border: 1px solid var(--line2); border-radius: 6px; padding: 8px 4px; text-align: center; }
+#news .bookkv b { display: block; font-size: 18px; color: var(--gold3); }
+#news .bookkv span { font-size: 11px; color: var(--ink2); }
+#news table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#news td { padding: 4px 6px; border-bottom: 1px solid var(--line2); }
+#news td.r { text-align: right; white-space: nowrap; color: var(--gold3); }
+#news .ver { font-size: 12px; color: var(--ink2); }
+@media (max-width: 420px) { #news .bookkv { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 760px) {
+  .title .links { gap: 0 2px; font-size: 12px; }
+  .title .links a, .title .links button { padding: 0 5px; }
+}
+@media (max-width: 760px) and (max-height: 900px) {
+  .title .logo { width: 84px; height: 84px; margin-bottom: 2px; }
+  .title h1 { font-size: 32px; }
+  .title.panel { padding: 18px 22px 10px; }
+  .title .how { margin-bottom: 12px; padding: 8px 12px; }
+  .title .best { margin-top: 10px; }
+}
+@media (min-width: 761px) and (max-height: 800px) {
+  .title .logo { width: 84px; height: 84px; margin-bottom: 4px; }
+  .title h1 { font-size: 40px; }
+  .title .how { margin-bottom: 12px; padding: 8px 12px; }
+  .title .orn { margin: 4px auto 10px; }
+  .title.panel { padding-top: 20px; padding-bottom: 14px; }
 }
 
 /* Palace map */
@@ -2474,6 +2530,11 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
       </div>
     </div>
     <div class="best" id="bestline"></div>
+    <div class="links">
+      <button type="button" id="b-book"><span data-t="book"></span></button><span class="dotsep" aria-hidden="true">·</span>
+      <button type="button" id="ver"></button><span class="dotsep" aria-hidden="true">·</span>
+      <a id="t-more" href="https://furkiozknn.github.io/" target="_blank" rel="noopener"><span data-t="more"></span></a>
+    </div>
     <div class="footer">Claude Game Arena · built by <a href="https://github.com/Furkiozknn" target="_blank" rel="noopener">Claude Opus 5.5</a></div>
   </div>
 </div>
@@ -2502,6 +2563,18 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
   </div>
 </div>
 
+<div class="overlay" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="news-h">
+  <div class="panel lac">
+    <h2 id="news-h" data-t="book"></h2>
+    <div class="bookkv" id="book-kv"></div>
+    <table id="book-tbl"></table>
+    <h3 data-t="newsH"></h3>
+    <div class="ver" id="news-ver"></div>
+    <ul id="news-list"></ul>
+    <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn primary" id="b-newsclose"><span data-t="back"></span></button></div>
+  </div>
+</div>
+
 <div class="overlay" id="settings" hidden>
   <div class="panel lac col">
     <h2 data-t="settings"></h2>
@@ -2513,6 +2586,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
     <div class="row"><span class="lbl" data-t="oneHand"></span><div class="seg" id="seg-onehand"><button data-oh="off" data-t="off"></button><button data-oh="on" data-t="on"></button></div></div>
     <div class="row"><span class="lbl" data-t="fullscreen"></span><button class="btn" id="b-full"><svg><use href="#i-fs"/></svg><span data-t="toggle"></span></button></div>
     <div class="row"><span class="lbl" data-t="a11y"></span><button class="btn" id="b-a11y"><span data-t="a11yOpen"></span></button></div>
+    <div class="row"><span class="lbl" data-t="newsH"></span><button class="btn" id="b-news2"><span data-t="a11yOpen"></span></button></div>
     <button class="btn primary w" id="b-setback"><span data-t="back"></span></button>
   </div>
 </div>
@@ -3604,6 +3678,12 @@ const settings = SET;
 window.settings = SET;
 const PROG = load('save', { stars: [], done: [], last: 0, times: [], tutDone: false, actions: { crouch: false, pebble: false, hide: false } });
 const BEST = load('best', { stars: 0, missions: 0 });
+const VERSION = '1.1', VERSION_DATE = 'Kasım 2026';
+const STATS = load('stats', { caught: 0, pebbles: 0, snuffed: 0, sec: 0 });   // v1.1: Gece Defteri (own key; old saves are untouched)
+const saveStats = () => store('stats', STATS);
+const SHAKE = { t: 0, d: 0.4, a: 0 };
+function shake(a, d) { if (RM_ON || FLAG.auto) return; SHAKE.a = a; SHAKE.d = SHAKE.t = d; }
+function buzz(p) { try { if (!FLAG.auto && navigator.vibrate) navigator.vibrate(p); } catch (e) { /* not supported */ } }
 if (FLAG.auto || FLAG.nosave) { PROG.stars = []; PROG.done = []; PROG.last = 0; PROG.times = []; }
 if (PROG.done && PROG.done.some(Boolean)) { PROG.tutDone = true; if (!PROG.actions) PROG.actions = { crouch: true, pebble: true, hide: true }; }
 const saveSettings = () => store('settings', SET), saveProg = () => store('save', PROG);
@@ -3636,6 +3716,12 @@ const unlocked = i => (i === -1 ? true : (i === 0 ? (!!PROG.tutDone || (PROG.don
 // ---------------------------------------------------------------------------
 const I18N = {
   tr: {
+    book: 'Gece Defteri', more: 'Diğer oyunlar', newsH: 'Yenilikler', stCaught: 'Yakalanma', stPebble: 'Atılan taş', stSnuff: 'Söndürülen fener', stTime: 'Sarayda geçen',
+    bookNone: 'Henüz tamamlanan görev yok.',
+    news1: 'Gece Defteri: görev başına en iyi süren, yıldızların ve toplam istatistiklerin (yalnız bu cihazda tutulur).',
+    news2: 'Yakalanınca ve vazo kırılınca ekran sarsılır, telefon titrer. Erişilebilirlik ayarlarında hareket azaltma açıksa sarsıntı olmaz.',
+    news3: 'Ana ekrana "Diğer oyunlar" bağlantısı, sürüm etiketi ve bu pencere eklendi.',
+    news4: 'Sayfa: paylaşım kartı (Open Graph), simge, tema rengi, Türkçe açıklama ve 404 sayfası. Ana ekran küçük masaüstü ekranlarda artık kaydırma istemiyor.',
     subtitle: 'Gece yarısı sarayda gizli bir görev', play: 'Oyna', cont: 'Devam Et: {m}', settings: 'Ayarlar', palaceMap: 'Saray Haritası',
     howto: 'Kaşıkçı Elması çalındı, yerinde sahtesi var. Genç bir iç oğlanı olarak Bostancı ve Yeniçeri muhafızlarına görünmeden ipuçlarını topla ve gerçek elması şafaktan önce Enderûn Hazine-i Âmire kaidesine koy. Gölgede kal, fenerleri söndür, perdelere saklan; adımlarının ses halkasına dikkat et.',
     mission: 'Görev', toDawn: 'Şafağa', pauseBtn: 'Duraklat (P)', soundBtn: 'Ses (M müzik, X efekt)', langBtn: 'Dil (L)', objectives: 'Görevler', visibility: 'Görünürlük',
@@ -3682,6 +3768,12 @@ const I18N = {
     startM1: '1. Göreve Başla', lockedTut: 'Kilitli: önce Görev 0’ı tamamla', actLocked: 'Bu hareket henüz açılmadı (Görev 0: Talim)',
   },
   en: {
+    book: 'Night Ledger', more: 'More games', newsH: "What's new", stCaught: 'Times caught', stPebble: 'Pebbles thrown', stSnuff: 'Lanterns snuffed', stTime: 'Time in palace',
+    bookNone: 'No mission completed yet.',
+    news1: 'Night Ledger: your best time and stars per mission, plus lifetime stats (kept on this device only).',
+    news2: 'The screen shakes and the phone buzzes when you are caught or a vase breaks. Nothing shakes if Reduce motion is on in the accessibility settings.',
+    news3: 'A "More games" link, a version tag and this window on the title screen.',
+    news4: 'Page: share card (Open Graph), icon, theme colour, a Turkish description and a 404 page. The title screen no longer needs scrolling on small desktop screens.',
     subtitle: 'A secret errand in the palace at midnight', play: 'Play', cont: 'Continue: {m}', settings: 'Settings', palaceMap: 'Palace Map',
     howto: 'The Spoon-maker’s Diamond has been swapped for a fake. As a young palace page, slip past Bostancı and Janissary guards, gather clues across Orta Kapı and Enderûn, and return the true diamond to the Hazine before dawn. Keep to the shadows, snuff the lanterns, hide behind curtains and mind the ring your footsteps make.',
     mission: 'Mission', toDawn: 'Dawn in', pauseBtn: 'Pause (P)', soundBtn: 'Sound (M music, X effects)', langBtn: 'Language (L)', objectives: 'Objectives', visibility: 'Visibility',
@@ -4933,6 +5025,7 @@ function updateCamera(dt) {
     CAM.tx += (gx - CAM.tx) * k; CAM.tz += (gz - CAM.tz) * k;
     const cp = Math.cos(CAM.pitch), dist = CAM.dist * (camera.aspect < 1 ? clamp(1.45 / camera.aspect * 0.62, 1, 1.6) : 1);
     camera.position.set(CAM.tx + Math.sin(CAM.yaw) * cp * dist, CAM.ty + Math.sin(CAM.pitch) * dist, CAM.tz + Math.cos(CAM.yaw) * cp * dist);
+    if (SHAKE.t > 0) { SHAKE.t -= dt; const a = SHAKE.a * Math.max(0, SHAKE.t) / SHAKE.d; camera.position.x += (Math.random() - 0.5) * a; camera.position.y += (Math.random() - 0.5) * a * 0.6; }
     camera.lookAt(CAM.tx, CAM.ty, CAM.tz);
     CUT.on.value = 1; CUT.player.value.set(P.x, 1.0, P.z); CUT.cam.value.copy(camera.position);
   } else if (G.screen === 'end') {
@@ -4974,7 +5067,7 @@ addEventListener('keydown', e => {
   if (e.repeat && !['KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) return;
   audioInit();
   const playing = G.screen === 'play' && !G.paused;
-  if (e.code === 'KeyP' || e.code === 'Escape') { if (!$('settings').hidden) closeSettings(); else if (G.screen === 'play') togglePause(); return; }
+  if (e.code === 'KeyP' || e.code === 'Escape') { if (!$('news').hidden) closeNews(); else if (!$('settings').hidden) closeSettings(); else if (G.screen === 'play') togglePause(); return; }
   if (e.code === 'KeyM') { SET.musicOn = !SET.musicOn; saveSettings(); auVolumes(); toast(t(SET.musicOn ? 'musicOn' : 'musicOff'), 'info'); return; }
   if (e.code === 'KeyX') { SET.sfxOn = !SET.sfxOn; saveSettings(); auVolumes(); toast(t(SET.sfxOn ? 'sfxOn' : 'sfxOff'), 'info'); return; }
   if (e.code === 'KeyL') { setLang(SET.lang === 'tr' ? 'en' : 'tr'); return; }
@@ -5235,12 +5328,13 @@ function showNote(head, text, ms = 5200) {
 }
 function starSvg(on, cls = '') { return `<svg class="${on ? 'on' : ''} ${cls}"><use href="#i-star"/></svg>`; }
 function show(id, on) { $(id).hidden = !on; }
-function hideAll() { for (const id of ['title', 'mapscr', 'pause', 'settings', 'result', 'endscr', 'hud', 'touch']) show(id, false); $('note').hidden = true; $('prompt').hidden = true; if ($('tut-banner')) $('tut-banner').hidden = true; }
+function hideAll() { for (const id of ['title', 'mapscr', 'pause', 'settings', 'news', 'result', 'endscr', 'hud', 'touch']) show(id, false); $('note').hidden = true; $('prompt').hidden = true; if ($('tut-banner')) $('tut-banner').hidden = true; }
 function applyTexts() {
   document.documentElement.lang = SET.lang;
   for (const el of document.querySelectorAll('[data-t]')) el.textContent = t(el.dataset.t);
   for (const el of document.querySelectorAll('[data-tt]')) { el.title = t(el.dataset.tt); el.setAttribute('aria-label', t(el.dataset.tt)); }
   $('b-lang').textContent = SET.lang === 'tr' ? 'EN' : 'TR';
+  $('ver').textContent = 'v' + VERSION + ' · ' + (SET.lang === 'tr' ? VERSION_DATE : 'Nov 2026'); if (!$('news').hidden) fillNews();
   for (const s of ['seg-lang', 'seg-lang2']) for (const b of $(s).children) b.classList.toggle('on', b.dataset.l === SET.lang);
   for (const b of $('seg-q').children) b.classList.toggle('on', b.dataset.q === SET.quality);
   if ($('seg-onehand')) for (const b of $('seg-onehand').children) b.classList.toggle('on', (b.dataset.oh === 'on') === !!SET.oneHand);
@@ -5262,6 +5356,21 @@ function setQuality(q) {
   scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
   applyTexts();
 }
+function fillNews() {
+  const m = Math.floor(STATS.sec / 60), tm = m >= 60 ? Math.floor(m / 60) + ' sa ' + (m % 60) + ' dk' : m + ' dk';
+  $('book-kv').innerHTML = [[STATS.caught, 'stCaught'], [STATS.pebbles, 'stPebble'], [STATS.snuffed, 'stSnuff'], [tm, 'stTime']].map(([v, k]) => `<div><b>${v}</b><span>${t(k)}</span></div>`).join('');
+  let rows = '';
+  for (let i = 0; i < NM; i++) {
+    if (!PROG.done[i]) continue;
+    const st = PROG.stars[i] || [0, 0, 0], n = st.filter(Boolean).length;
+    rows += `<tr><td>${i + 1}. ${mName(i)}</td><td class="r">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</td><td class="r">${PROG.times[i] ? fmtT(PROG.times[i]) : '-'}</td></tr>`;
+  }
+  $('book-tbl').innerHTML = rows || `<tr><td>${t('bookNone')}</td></tr>`;
+  $('news-ver').textContent = 'v' + VERSION + ' · ' + (SET.lang === 'tr' ? VERSION_DATE : 'Nov 2026');
+  $('news-list').innerHTML = [1, 2, 3, 4].map(k => `<li>${t('news' + k)}</li>`).join('');
+}
+function openNews() { saveStats(); show('news', true); fillNews(); $('b-newsclose').focus(); }
+function closeNews() { show('news', false); if (G.screen === 'title') $('b-book').focus(); }
 function openSettings() { show('settings', true); applyTexts(); $('b-setback').focus(); }
 function closeSettings() { show('settings', false); }
 function toTitle() {
@@ -5573,20 +5682,21 @@ function handleEvents(S) {
     const g = e.g != null ? S.guards[e.g] : null;
     switch (e.k) {
       case 'step': if (!quiet) { SFX.step(e.surf, e.gait); if (e.surf === 'gravel' || e.gait === 'run') for (let k = 0; k < (e.gait === 'run' ? 3 : 2); k++) emit(S.p.x + (Math.random() - 0.5) * 0.3, 0.08, S.p.z + (Math.random() - 0.5) * 0.3, (Math.random() - 0.5) * 0.5, 0.25 + Math.random() * 0.3, (Math.random() - 0.5) * 0.5, 0.7, 0.28, e.surf === 'gravel' ? 0xd8ccb0 : 0xa8a4a0, 0.35, 0.4); } break;
-      case 'noise': if ((e.r >= 2 || e.kind === 'step') && !quiet) ring(e.x, e.z, e.r, e.kind === 'vase' || e.kind === 'pebble' || e.heard ? 0xffb050 : e.kind === 'meow' ? 0xff90c0 : 0xdfe8ff, e.kind === 'step'); break;
+      case 'noise': if (e.kind === 'pebble') STATS.pebbles++;
+        if ((e.r >= 2 || e.kind === 'step') && !quiet) ring(e.x, e.z, e.r, e.kind === 'vase' || e.kind === 'pebble' || e.heard ? 0xffb050 : e.kind === 'meow' ? 0xff90c0 : 0xdfe8ff, e.kind === 'step'); break;
       case 'sus': if (!quiet) { if (e.type === 'cat') { SFX.meow(panOf(g.x, g.z)); } else { SFX.hm(panOf(g.x, g.z)); const gl = g ? `[${guardLabel(g)}] ` : ''; toast(gl + '“' + pick(t(e.type === 'cook' ? 'susCook' : 'sus')) + '”', 'info', 2000); } } break;
       case 'alert': if (!quiet && !e.called) { SFX.shout(panOf(g.x, g.z)); const gl = g ? `[${guardLabel(g)}] ` : ''; toast(gl + '“' + pick(t('alert')) + '”', 'bad', 2200); } break;
       case 'call': if (!quiet) { const gl = g ? `[${guardLabel(g)}] ` : ''; toast(gl + '“' + t('call') + '”', 'bad', 2000); } break;
       case 'meow': if (!quiet) { SFX.meow(panOf(g.x, g.z)); toast(t('meow'), 'bad', 2200); } break;
-      case 'caught': if (!quiet) { SFX.caught(); const msg = g ? t('caughtWho', { g: guardLabel(g) }) : t('caught'); toast(msg, 'bad', 2800); $('fade').classList.add('on'); setTimeout(() => $('fade').classList.remove('on'), 1500); } break;
+      case 'caught': STATS.caught++; saveStats(); if (!quiet) { shake(0.7, 0.5); buzz([70, 40, 110]); SFX.caught(); const msg = g ? t('caughtWho', { g: guardLabel(g) }) : t('caught'); toast(msg, 'bad', 2800); $('fade').classList.add('on'); setTimeout(() => $('fade').classList.remove('on'), 1500); } break;
       case 'respawn': resetDynamicSoft(S); break;
       case 'checkpoint': if (!quiet) { SFX.checkpoint(); toast(t('cp'), 'good', 1800); } break;
       case 'need': if (!quiet) toast(t(S.idx === 8 ? 'needKey' : 'need'), 'bad', 2000); break;
-      case 'snuff': { const l = S.L.lights[e.i]; bakeGlow(S); if (!quiet) { SFX.snuff(); toast(t('snuff'), 'info', 1400); for (let k = 0; k < 12; k++) emit(l.x, 2.3, l.z, (Math.random() - 0.5) * 0.4, 0.5 + Math.random() * 0.6, (Math.random() - 0.5) * 0.4, 1.6, 0.6, 0x9aa0b0, 0.35); } break; }
+      case 'snuff': { STATS.snuffed++; const l = S.L.lights[e.i]; bakeGlow(S); if (!quiet) { SFX.snuff(); toast(t('snuff'), 'info', 1400); for (let k = 0; k < 12; k++) emit(l.x, 2.3, l.z, (Math.random() - 0.5) * 0.4, 0.5 + Math.random() * 0.6, (Math.random() - 0.5) * 0.4, 1.6, 0.6, 0x9aa0b0, 0.35); } break; }
       case 'relight': bakeGlow(S); if (!quiet) { SFX.relight(); toast(t('relight'), 'info', 1800); } break;
       case 'vase': {
         const V = S.L.vases[e.i]; if (WORLD.vases) { WORLD.vases.vm.setMatrixAt(e.i, M(V.x, -5, V.z)); WORLD.vases.sm.setMatrixAt(e.i, M(V.x, 0, V.z, e.i)); WORLD.vases.vm.instanceMatrix.needsUpdate = WORLD.vases.sm.instanceMatrix.needsUpdate = true; }
-        if (!quiet) { SFX.vase(); toast(t('vase'), 'bad', 2000); for (let k = 0; k < 14; k++) emit(V.x, 0.4, V.z, (Math.random() - 0.5) * 3, 1 + Math.random() * 2, (Math.random() - 0.5) * 3, 0.7, 0.25, 0xe8eef8, 0.8, 6); }
+        if (!quiet) { shake(0.35, 0.25); buzz(40); SFX.vase(); toast(t('vase'), 'bad', 2000); for (let k = 0; k < 14; k++) emit(V.x, 0.4, V.z, (Math.random() - 0.5) * 3, 1 + Math.random() * 2, (Math.random() - 0.5) * 3, 0.7, 0.25, 0xe8eef8, 0.8, 6); }
         break;
       }
       case 'pick': {
@@ -5739,6 +5849,12 @@ $('b-play').addEventListener('click', () => { audioInit(); SFX.click(); openMap(
 $('b-cont').addEventListener('click', () => { audioInit(); SFX.click(); openMap(); });
 $('b-daily').addEventListener('click', () => { audioInit(); SFX.click(); startDaily(); });
 $('b-a11y').addEventListener('click', () => { SFX.click(); if (window.Arena) Arena.openSettings(); });
+$('b-book').addEventListener('click', () => { SFX.click(); openNews(); });
+$('ver').addEventListener('click', () => { SFX.click(); openNews(); });
+$('b-news2').addEventListener('click', () => { SFX.click(); openNews(); });
+$('b-newsclose').addEventListener('click', () => { SFX.click(); closeNews(); });
+$('news').addEventListener('click', e => { if (e.target === $('news')) closeNews(); });
+addEventListener('pagehide', saveStats);
 $('b-rshare').addEventListener('click', () => { SFX.click(); shareResult(false); });
 $('b-eshare').addEventListener('click', () => { SFX.click(); shareResult(true); });
 $('b-set1').addEventListener('click', () => { SFX.click(); openSettings(); });
@@ -5766,7 +5882,7 @@ for (const [id, key] of [['r-master', 'master'], ['r-music', 'music'], ['r-sfx',
 const autoPause = () => { if (G.screen === 'play' && !G.paused && !FLAG.auto) togglePause(true); };
 if (window.Arena) Arena.on('pause', autoPause);
 document.addEventListener('visibilitychange', () => {
-  G.hidden = document.hidden;
+  G.hidden = document.hidden; if (document.hidden) saveStats();
   if (AU.ctx) { if (document.hidden) AU.ctx.suspend(); else AU.ctx.resume(); }
   if (document.hidden && !window.Arena) autoPause();
 });
@@ -5803,6 +5919,7 @@ function update(dt) {
   if (FLAG.auto && G.ready) autoUpdate(dt);
   const S = G.S; if (!S) return;
   if (G.screen === 'play' && !G.paused) {
+    if (!G.simming) { STATS.sec += dt; if ((G.statT = (G.statT || 0) + dt) > 15) { G.statT = 0; saveStats(); } }
     if (G.idx === -1) updateTutorialFlow(S, dt);
     G.acc += dt * (G.simming ? 1 : G.speed); let n = 0;
     while (G.acc >= C.DT && n < 12) {
