@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://furkiozknn.github.io/topkapi-gecesi/">
-    <img src="docs/card.jpg" width="100%" alt="Topkapı Gecesi: a 3D night stealth game in an Ottoman palace. A page sneaks through the moonlit courtyard past the guards' vision cones. Click to play in your browser.">
+    <img src="docs/card-3d.jpg" width="100%" alt="Topkapı Gecesi: a 3D night stealth game in an Ottoman palace. A page sneaks through the moonlit courtyard past the guards' vision cones. Click to play in your browser.">
   </a>
 </p>
 
@@ -29,13 +29,29 @@
 
 ## Features
 
+<p align="center">
+  <img src="docs/features.jpg" width="100%" alt="Topkapı Gecesi feature map: a dotted patrol route through the moonlit courtyard links five lanterns: nine night missions, guard vision cones, light shadow and hiding, a space-time A star bot, and one file at 60 fps.">
+</p>
+
+<details>
+<summary><b>Feature details</b></summary>
+
 - **Nine night missions across three palace quarters:** Sneak through The Courts, The Harem, and The Treasury across 9 distinct missions, each featuring an optional objective (a lost tulip bulb, a secret letter, or "be a ghost") and 27 total stars to earn before dawn breaks after 7 minutes.
 - **Dynamic vision cones & patrol AI:** Halberdiers, harem guards, the head cook and his cat patrol active routes; bright inner cones spot you even in shadow, while faint outer cones spot you in lantern light. Footstep gravel and noise rings alert guards from patrol to suspicious (`?`) to alarm (`!`), with pebble throws (up to 9 m) to lure them away.
 - **Interactive light, shadow & hiding spots:** Moonlight casts long cypress shadows against warm lantern pools; snuff lanterns to extinguish light zones, hide behind curtains or inside chests, and monitor exposure with the animated almond-eye visibility meter.
 - **Space-time A\* bot simulation:** An automated `?auto` bot plans timed escape routes avoiding every vision cone and noise ring using a space-time A* search—tested and verified across **9/9 missions, 27/27 stars, 0 alarms**, 60 fps, and 26–33 draw calls in play.
 - **Ultra-lean zero-asset performance:** A single `index.html` running Three.js r170 delivering 60 fps at 26–33 draw calls in play (39–47 on title, 78k–84k triangles) on Intel UHD 620, with 100% procedural meshes, textures, and makam Hicaz Web Audio.
 
+</details>
+
 ## How to play
+
+<p align="center">
+  <img src="docs/how-to-play.jpg" width="100%" alt="How to play Topkapı Gecesi: stay in the shadows, distract guards with pebbles and hide, then dash to the gold exit ring before dawn. Keyboard controls are shown as keycaps above three pools of lantern light.">
+</p>
+
+<details>
+<summary><b>Goal and steps</b></summary>
 
 > [!TIP]
 > **Goal:** Pick up the clue (a scroll, the real diamond, the treasury key), then reach the gold ring at the exit (or place the diamond on the pedestal in the final mission) before dawn after 7 minutes. Being caught sends you back to the last quiet fountain checkpoint.
@@ -43,6 +59,8 @@
 1. **Stay in the shadows:** Crouch (`C` or hold `Ctrl`) to lower your visibility and quiet your steps. Watch guard vision cones: the bright inner cone spots you anywhere; the faint outer cone spots you only in lantern light.
 2. **Distract and manipulate:** Throw a pebble (`Q`, up to 9 m) behind a guard to pull him off his route. Snuff lanterns (`E`) to plunge hallways into darkness, or hide inside chests and behind curtains (`E`).
 3. **Ghost to the exit:** Time your dashes (`Space`), collect the mission clue, fulfill the optional objective (bulb, letter, or ghost), and reach the gold exit ring unseen.
+
+</details>
 
 <details>
 <summary><b>The nine missions</b></summary>
