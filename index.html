@@ -1262,6 +1262,29 @@ input[type=range] {
   overflow: hidden;
 }
 #dbg .err { color: #f66; }
+
+/* stil-3d: small chibi figures in the card corners (decorative, never over text or buttons) */
+#title .panel, #pause .panel { position: relative; }
+.fg { position: absolute; pointer-events: none; background: no-repeat center bottom / contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.55)); z-index: 1; }
+.fg-t1 { left: 22px; top: 16px; width: 68px; height: 104px; background-image: url(assets/3d/ic-oglan.webp); }
+.fg-t2 { right: 26px; top: 18px; width: 48px; height: 102px; background-image: url(assets/3d/papagan.webp); }
+.fg-p1 { left: 20px; top: 12px; width: 44px; height: 84px; background-image: url(assets/3d/ic-oglan.webp); }
+.fg-p2 { right: 22px; top: 22px; width: 48px; height: 74px; background-image: url(assets/3d/kedi.webp); }
+.fg-r1 { right: 30px; top: -58px; width: 40px; height: 74px; background-image: url(assets/3d/ic-oglan.webp); z-index: 0; }
+.fg-r2 { left: 30px; top: -50px; width: 44px; height: 66px; background-image: url(assets/3d/aga.webp); z-index: 0; }
+.fg-e1 { left: 14px; top: 12px; width: 44px; height: 80px; background-image: url(assets/3d/ic-oglan.webp); }
+.fg-e2 { right: 14px; top: 12px; width: 36px; height: 80px; background-image: url(assets/3d/papagan.webp); }
+#endscr h2 { text-align: center; padding: 0 52px; }
+@media (max-width: 760px) {
+  .fg-t1 { left: 10px; top: 16px; width: 64px; height: 104px; }
+  .fg-t2 { right: 14px; top: 18px; width: 46px; height: 104px; }
+  .fg-r1 { right: 18px; } .fg-r2 { left: 18px; }
+}
+@media (max-height: 640px) {
+  .fg-t1 { top: 12px; width: 50px; height: 78px; }
+  .fg-t2 { top: 14px; width: 36px; height: 76px; }
+}
+@media (max-height: 760px) { .fg-r1, .fg-r2 { display: none; } }
 </style>
 <script>/*ARENA-KIT:BEGIN v1.3.2 sha256:ce77e23fab7c*/
 /* ARENA-KIT v1 — shared layer for the 21 Claude Game Arena games.
@@ -2514,6 +2537,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
 
 <div class="overlay" id="title">
   <div class="title lac panel">
+    <i class="fg fg-t1" aria-hidden="true"></i><i class="fg fg-t2" aria-hidden="true"></i>
     <svg class="logo"><use href="#i-logo"/></svg>
     <h1>Topkapı Gecesi</h1>
     <div class="sub" data-t="subtitle"></div>
@@ -2554,6 +2578,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
 
 <div class="overlay" id="pause" hidden>
   <div class="panel lac col">
+    <i class="fg fg-p1" aria-hidden="true"></i><i class="fg fg-p2" aria-hidden="true"></i>
     <h2 data-t="paused"></h2>
     <button class="btn primary w" id="b-resume"><svg><use href="#i-play"/></svg><span data-t="resume"></span></button>
     <button class="btn w" id="b-restart"><svg><use href="#i-retry"/></svg><span data-t="restart"></span></button>
@@ -2592,6 +2617,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
 </div>
 
 <div class="sheet" id="result" hidden>
+  <i class="fg fg-r1" aria-hidden="true"></i><i class="fg fg-r2" aria-hidden="true"></i>
   <div class="panel lac">
     <div class="rhead"><h2 id="r-title"></h2><div class="bigstars" id="r-stars"></div></div>
     <div class="rsub" id="r-sub"></div>
@@ -2609,6 +2635,7 @@ window.ArenaCore = { version: VERSION, kalite, render, kabuk, his, kamera, test,
 </div>
 
 <div class="endbox lac panel" id="endscr" hidden>
+  <i class="fg fg-e1" aria-hidden="true"></i><i class="fg fg-e2" aria-hidden="true"></i>
   <h2 class="serif" style="color:var(--gold2)" data-t="endTitle"></h2>
   <p data-t="endText"></p>
   <div class="kv" id="e-kv" style="grid-template-columns:repeat(3,1fr)"></div>
@@ -4749,15 +4776,57 @@ const SHAFT = (() => {
   return { geo, mat, pgeo, pmat };
 })();
 const DIA_MAT = new THREE.MeshStandardMaterial({ color: 0xdff2ff, emissive: 0x6a8ab0, emissiveIntensity: 0.6, roughness: 0.05, metalness: 0.3, flatShading: true });
+// ---------------------------------------------------------------------------
+// stil-3d: the figures are camera-facing chibi sprites (assets/3d/*.webp); the old lathe/box figures stay in the scene
+// with an invisible material so every pose/position update and all collision/vision logic is untouched. Everything three.js
+// creates for the sprites is made inside sakin(): own seeded Math.random, the page's one is restored afterwards.
+// ---------------------------------------------------------------------------
+const sakin = fn => { const o = Math.random; let s = 0x51ed270b; Math.random = () => { s = (s + 0x6D2B79F5) >>> 0; let x = s; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; try { return fn(); } finally { Math.random = o; } };
+const SPRMAP = { page: 'ic-oglan', halb: 'bostanci', bostanci: 'bostanci', yeniceri: 'bostanci', eunuch: 'aga', cook: 'askci', cat: 'kedi' };
+const SPR = sakin(() => {
+  const L = new THREE.TextureLoader(), o = {}, def = { 'ic-oglan': [207, 400, 2.05], 'ic-oglan-egil': [206, 300, 1.6], bostanci: [225, 440, 2.75], aga: [218, 400, 2.15], askci: [243, 400, 2.0], kedi: [172, 300, 0.95] };
+  for (const k in def) { const t = L.load('assets/3d/' + k + '.webp'); t.colorSpace = THREE.SRGBColorSpace; o[k] = { tex: t, a: def[k][0] / def[k][1], h: def[k][2] }; }
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 30);
+  gr.addColorStop(0, 'rgba(0,0,0,0.55)'); gr.addColorStop(0.6, 'rgba(0,0,0,0.25)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+  const tx = new THREE.CanvasTexture(cv), geo = new THREE.PlaneGeometry(1, 1); geo.rotateX(-Math.PI / 2); geo.userData.keep = true;
+  const mat = new THREE.MeshBasicMaterial({ map: tx, transparent: true, depthWrite: false, fog: false }); mat.shared = true;
+  o.shadow = { geo, mat };
+  return o;
+});
+function sprEntry(type, list) {
+  return sakin(() => {
+    const key = SPRMAP[type] || 'bostanci', d = SPR[key];
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: d.tex, transparent: true, alphaTest: 0.08 }));
+    sp.center.set(0.5, 0.02); sp.renderOrder = 1;
+    const sh = new THREE.Mesh(SPR.shadow.geo, SPR.shadow.mat); sh.renderOrder = 0;
+    add(sh, list); add(sp, list);
+    return { sp, sh, key, base: key, flip: 1, top: d.h };
+  });
+}
+// follow the (invisible) figure mesh: position, size, walk bob, light tint, left/right facing
+function sprSync(E, mesh, x, z, w, alert, crouch) {
+  const vis = mesh.visible; E.sp.visible = vis; E.sh.visible = vis; if (!vis) return;
+  const key = crouch ? 'ic-oglan-egil' : E.base, d = SPR[key];
+  if (E.key !== key) { E.key = key; E.sp.material.map = d.tex; }
+  const U = mesh.userData.U, mv = Math.min(1, U.uAmp.value / 0.4), ph = U.uPhase.value;
+  const asp = camera.aspect, K = 1 + 0.75 * clamp((1 - asp) / 0.5, 0, 1), h = d.h * K;
+  const a = -mesh.rotation.y, side = Math.cos(a) * camera.matrixWorld.elements[0] + Math.sin(a) * camera.matrixWorld.elements[2];
+  if (side > 0.25) E.flip = 1; else if (side < -0.25) E.flip = -1;
+  E.sp.scale.set(h * d.a * E.flip, h, 1);
+  E.sp.position.set(x, Math.abs(Math.sin(ph)) * 0.09 * mv * K, z); E.sp.material.rotation = Math.sin(ph) * 0.07 * mv;
+  const c = E.sp.material.color, pul = alert ? 0.5 + 0.5 * Math.sin(G.time * 12) : 0;
+  c.setRGB(Math.min(1.1, 0.74 + w * 1.4 + pul * 0.35), Math.min(1.05, 0.78 + w * 0.8 - pul * 0.25), Math.min(1.05, 0.95 - w * 0.2 - pul * 0.3));
+  E.sh.position.set(x, 0.04, z); const sw = (key === 'kedi' ? 1.1 : 1.7) * K; E.sh.scale.set(sw, 1, sw * 0.8); E.top = h;
+}
 function buildDynamic(L) {
   for (const m of WORLD.dyn) { scene.remove(m); if (m.material && !m.material.shared && m.material !== DIA_MAT) m.material.dispose(); if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); }
   WORLD.dyn = [];
   const D = WORLD.dyn;
-  WORLD.player = add(figMesh('page'), D);
+  WORLD.player = add(figMesh('page'), D); WORLD.player.material.visible = false; WORLD.pspr = sprEntry('page', D);
   WORLD.guards = L.D.guards.map(Gd => {
-    const mesh = add(figMesh(Gd.type), D), cone = add(coneMesh(), D);
+    const mesh = add(figMesh(Gd.type), D), cone = add(coneMesh(), D); mesh.material.visible = false; const spE = sprEntry(Gd.type, D);
     const icon = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: ICONS.sus, depthTest: false, transparent: true })), D); icon.scale.set(0.8, 0.8, 1); icon.renderOrder = 5; icon.visible = false;
-    return { mesh, cone, icon, bob: Math.random() * 6, type: Gd.type, state: '' };
+    return { mesh, cone, icon, spE, bob: Math.random() * 6, type: Gd.type, state: '' };
   });
   for (const f in FIG) FIG[f].userData.keep = true;
   WORLD.items = L.items.map(it => {
@@ -5626,7 +5695,7 @@ function openEnd() {
   if (window.Arena) { const others = Arena.games.filter(g => g !== 'topkapi-gecesi'); $('e-another').href = 'https://furkiozknn.github.io/' + others[Math.floor(Math.random() * others.length)] + '/'; } else { $('b-eshare').hidden = true; $('e-another').hidden = true; }
   const S = C.newSim(7); S.ghost = true; G.S = S;
   if (!WORLD.level || WORLD.level.idx !== 7) buildLevel(S.L);
-  resetDynamic(S); for (const g of WORLD.guards) { g.mesh.visible = false; g.cone.visible = false; g.icon.visible = false; }
+  resetDynamic(S); for (const g of WORLD.guards) { g.mesh.visible = false; g.cone.visible = false; g.icon.visible = false; if (g.spE) { g.spE.sp.visible = false; g.spE.sh.visible = false; } }
   CAM.t = 0; applySky('dawn', 1);
   show('endscr', true);
   const tot = totalStars();
@@ -5743,6 +5812,7 @@ function updateCone(V, g, S) {
   }
   V.cone.geometry.attributes.position.needsUpdate = true; V.cone.geometry.attributes.color.needsUpdate = true;
 }
+function w0(S, x, z) { return lanternWarm(S, x, z); }
 function lanternWarm(S, x, z) { const i = C.cellAt(S.L, x, z); return i < 0 ? 0 : Math.max(0, C.lightAt(S, x, z) - S.L.moon[i]); }
 function render(dt) {
   const S = G.S, play = G.screen === 'play' || G.screen === 'result';
@@ -5760,6 +5830,7 @@ function render(dt) {
       const U = pm.userData.U, amp = moving ? (P.gait === 'run' ? 0.7 : cr ? 0.3 : 0.45) : 0;
       U.uAmp.value += (amp - U.uAmp.value) * Math.min(1, dt * 10); if (moving) U.uPhase.value += dt * (P.gait === 'run' ? 13 : cr ? 6.5 : 9);
     }
+    if (WORLD.pspr) sprSync(WORLD.pspr, pm, P.x, P.z, pm.visible ? w0(S, P.x, P.z) : 0, false, P.crouch && P.hidden < 0);
     // guards
     S.guards.forEach((g, k) => {
       const V = WORLD.guards[k]; if (!V) return;
@@ -5769,11 +5840,12 @@ function render(dt) {
       const w = lanternWarm(S, g.x, g.z), al = g.state === 'alert' ? 0.25 + 0.15 * Math.sin(T * 12) : 0;
       V.mesh.material.emissive.setRGB(w * 0.26 + al, w * 0.15, w * 0.06);
       const U = V.mesh.userData.U; U.uPhase.value = V.bob; U.uAmp.value += ((g.moving ? (g.state === 'alert' ? 0.62 : 0.38) : 0) - U.uAmp.value) * Math.min(1, dt * 8);
+      if (V.spE) sprSync(V.spE, V.mesh, g.x, g.z, w, g.state === 'alert', false);
       if (V.cone.visible) updateCone(V, g, S);
       const st = g.state === 'alert' ? 'alert' : (g.state === 'sus' || g.state === 'search') ? (g.type === 'cat' ? 'cat' : 'sus') : '';
       if (st !== V.state) { V.state = st; if (st) V.icon.material.map = ICONS[st]; V.icon.material.needsUpdate = true; }
       if (st) V.icon.scale.setScalar(st === 'alert' ? 0.85 + 0.15 * Math.abs(Math.sin(T * 7)) : 0.8);
-      V.icon.visible = !!st && show; V.icon.position.set(g.x, (g.type === 'cat' ? 1.0 : 2.75) + Math.sin(T * 5) * 0.06, g.z);
+      V.icon.visible = !!st && show; V.icon.position.set(g.x, (V.spE ? V.spE.top + 0.4 : (g.type === 'cat' ? 1.0 : 2.75)) + Math.sin(T * 5) * 0.06, g.z);
     });
     // items
     for (const W of WORLD.items) { if (!W.mesh.visible) continue; W.mesh.position.y = 0.9 + Math.sin(T * 2 + W.it.x) * 0.12; W.mesh.rotation.y = T * 1.2; W.ring.material.opacity = 0.45 + 0.3 * Math.sin(T * 3); if (Math.random() < dt * 5) emit(W.it.x + (Math.random() - 0.5) * 0.6, 0.6 + Math.random() * 0.6, W.it.z + (Math.random() - 0.5) * 0.6, 0, 0.4, 0, 1.0, 0.22, 0xffe08a, 0.8); }
