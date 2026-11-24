@@ -4782,9 +4782,9 @@ const DIA_MAT = new THREE.MeshStandardMaterial({ color: 0xdff2ff, emissive: 0x6a
 // creates for the sprites is made inside sakin(): own seeded Math.random, the page's one is restored afterwards.
 // ---------------------------------------------------------------------------
 const sakin = fn => { const o = Math.random; let s = 0x51ed270b; Math.random = () => { s = (s + 0x6D2B79F5) >>> 0; let x = s; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; try { return fn(); } finally { Math.random = o; } };
-const SPRMAP = { page: 'ic-oglan', halb: 'bostanci', bostanci: 'bostanci', yeniceri: 'bostanci', eunuch: 'aga', cook: 'askci', cat: 'kedi' };
+const SPRMAP = { page: 'ic-oglan', halb: 'bostanci', bostanci: 'bostanci', yeniceri: 'yeniceri', eunuch: 'aga', cook: 'askci', cat: 'kedi' };
 const SPR = sakin(() => {
-  const L = new THREE.TextureLoader(), o = {}, def = { 'ic-oglan': [207, 400, 2.05], 'ic-oglan-egil': [206, 300, 1.6], bostanci: [225, 440, 2.75], aga: [218, 400, 2.15], askci: [243, 400, 2.0], kedi: [172, 300, 0.95] };
+  const L = new THREE.TextureLoader(), o = {}, def = { 'ic-oglan': [207, 400, 2.05], 'ic-oglan-egil': [206, 300, 1.6], bostanci: [225, 440, 2.75], yeniceri: [167, 440, 2.72], aga: [218, 400, 2.15], askci: [243, 400, 2.0], kedi: [172, 300, 0.95] };
   for (const k in def) { const t = L.load('assets/3d/' + k + '.webp'); t.colorSpace = THREE.SRGBColorSpace; o[k] = { tex: t, a: def[k][0] / def[k][1], h: def[k][2] }; }
   const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 30);
   gr.addColorStop(0, 'rgba(0,0,0,0.55)'); gr.addColorStop(0.6, 'rgba(0,0,0,0.25)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
@@ -4796,7 +4796,24 @@ const SPR = sakin(() => {
 function sprEntry(type, list) {
   return sakin(() => {
     const key = SPRMAP[type] || 'bostanci', d = SPR[key];
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: d.tex, transparent: true, alphaTest: 0.08 }));
+    const mat = new THREE.SpriteMaterial({ map: d.tex, transparent: true, alphaTest: 0.08 });
+    // fake-normal lantern shading in the fragment shader: uniforms are set by sprSync (no randomness, no new objects in play)
+    const U = { uLd: { value: new THREE.Vector3(0, 0.3, 0.9) }, uAmt: { value: 0 }, uFl: { value: 1 } }; mat.userData.U = U;
+    mat.customProgramCacheKey = () => 'sprlit';
+    mat.onBeforeCompile = sh => {
+      Object.assign(sh.uniforms, U);
+      sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+uniform vec3 uLd; uniform float uAmt; uniform float uFl;`)
+        .replace('#include <map_fragment>', `#include <map_fragment>
+      { vec2 q = vec2((vMapUv.x - 0.5) * 2.0 * uFl, (vMapUv.y - 0.5) * 1.5); float nz = sqrt(max(0.06, 1.0 - dot(q, q) * 0.8)); vec3 n = normalize(vec3(q * 0.9, nz));
+        vec3 Lw = normalize(uLd); float lam = dot(n, Lw) * 0.5 + 0.5;
+        float moon = dot(n, normalize(vec3(-0.35, 0.8, 0.5))) * 0.5 + 0.5;
+        vec3 cool = vec3(0.80, 0.88, 1.06) * (0.74 + 0.38 * moon);
+        vec3 warm = vec3(1.20, 0.98, 0.72) * (0.62 + 0.75 * lam);
+        float rim = pow(1.0 - n.z, 2.0) * max(0.0, dot(normalize(n.xy + 1e-4), Lw.xy));
+        diffuseColor.rgb *= mix(cool, warm, uAmt) + vec3(1.0, 0.62, 0.28) * rim * uAmt * 0.55; }`);
+    };
+    const sp = new THREE.Sprite(mat);
     sp.center.set(0.5, 0.02); sp.renderOrder = 1;
     const sh = new THREE.Mesh(SPR.shadow.geo, SPR.shadow.mat); sh.renderOrder = 0;
     add(sh, list); add(sp, list);
@@ -4804,7 +4821,7 @@ function sprEntry(type, list) {
   });
 }
 // follow the (invisible) figure mesh: position, size, walk bob, light tint, left/right facing
-function sprSync(E, mesh, x, z, w, alert, crouch) {
+function sprSync(E, mesh, x, z, w, alert, crouch, S) {
   const vis = mesh.visible; E.sp.visible = vis; E.sh.visible = vis; if (!vis) return;
   const key = crouch ? 'ic-oglan-egil' : E.base, d = SPR[key];
   if (E.key !== key) { E.key = key; E.sp.material.map = d.tex; }
@@ -4813,6 +4830,15 @@ function sprSync(E, mesh, x, z, w, alert, crouch) {
   const a = -mesh.rotation.y, side = Math.cos(a) * camera.matrixWorld.elements[0] + Math.sin(a) * camera.matrixWorld.elements[2];
   if (side > 0.25) E.flip = 1; else if (side < -0.25) E.flip = -1;
   E.sp.scale.set(h * d.a * E.flip, h, 1);
+  { // dominant lantern/brazier direction in screen space (right, up, toward camera), weighted by falloff; deterministic
+    const e = camera.matrixWorld.elements, Ls = S.L.lights; let lx = 0, ly = 0, lz = 0, tw = 0;
+    for (let k = 0; k < Ls.length; k++) {
+      if (!S.lit[k]) continue; const l = Ls[k], dx = l.x - x, dz = l.z - z, dd = Math.hypot(dx, dz); if (dd >= l.r) continue;
+      const wk = l.str * Math.pow(1 - dd / l.r, 1.25), inv = 1 / (dd + 0.4);
+      lx += wk * (dx * e[0] + dz * e[2]) * inv; lz += wk * (dx * e[8] + dz * e[10]) * inv; ly += wk * (l.kind === 'brazier' ? 0.35 : 0.6); tw += wk;
+    }
+    const V = E.sp.material.userData.U; V.uLd.value.set(lx, ly, lz + tw * 0.35 + 0.001); V.uAmt.value = Math.min(1, w * 1.7); V.uFl.value = E.flip;
+  }
   E.sp.position.set(x, Math.abs(Math.sin(ph)) * 0.09 * mv * K, z); E.sp.material.rotation = Math.sin(ph) * 0.07 * mv;
   const c = E.sp.material.color, pul = alert ? 0.5 + 0.5 * Math.sin(G.time * 12) : 0;
   c.setRGB(Math.min(1.1, 0.74 + w * 1.4 + pul * 0.35), Math.min(1.05, 0.78 + w * 0.8 - pul * 0.25), Math.min(1.05, 0.95 - w * 0.2 - pul * 0.3));
@@ -4824,7 +4850,7 @@ function buildDynamic(L) {
   const D = WORLD.dyn;
   WORLD.player = add(figMesh('page'), D); WORLD.player.material.visible = false; WORLD.pspr = sprEntry('page', D);
   WORLD.guards = L.D.guards.map(Gd => {
-    const mesh = add(figMesh(Gd.type), D), cone = add(coneMesh(), D); mesh.material.visible = false; const spE = sprEntry(Gd.type, D);
+    const mesh = add(figMesh(Gd.type), D), cone = add(coneMesh(), D); mesh.material.visible = false; const spE = sprEntry(Gd.role || Gd.type, D);
     const icon = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: ICONS.sus, depthTest: false, transparent: true })), D); icon.scale.set(0.8, 0.8, 1); icon.renderOrder = 5; icon.visible = false;
     return { mesh, cone, icon, spE, bob: Math.random() * 6, type: Gd.type, state: '' };
   });
@@ -5830,7 +5856,7 @@ function render(dt) {
       const U = pm.userData.U, amp = moving ? (P.gait === 'run' ? 0.7 : cr ? 0.3 : 0.45) : 0;
       U.uAmp.value += (amp - U.uAmp.value) * Math.min(1, dt * 10); if (moving) U.uPhase.value += dt * (P.gait === 'run' ? 13 : cr ? 6.5 : 9);
     }
-    if (WORLD.pspr) sprSync(WORLD.pspr, pm, P.x, P.z, pm.visible ? w0(S, P.x, P.z) : 0, false, P.crouch && P.hidden < 0);
+    if (WORLD.pspr) sprSync(WORLD.pspr, pm, P.x, P.z, pm.visible ? w0(S, P.x, P.z) : 0, false, P.crouch && P.hidden < 0, S);
     // guards
     S.guards.forEach((g, k) => {
       const V = WORLD.guards[k]; if (!V) return;
@@ -5840,7 +5866,7 @@ function render(dt) {
       const w = lanternWarm(S, g.x, g.z), al = g.state === 'alert' ? 0.25 + 0.15 * Math.sin(T * 12) : 0;
       V.mesh.material.emissive.setRGB(w * 0.26 + al, w * 0.15, w * 0.06);
       const U = V.mesh.userData.U; U.uPhase.value = V.bob; U.uAmp.value += ((g.moving ? (g.state === 'alert' ? 0.62 : 0.38) : 0) - U.uAmp.value) * Math.min(1, dt * 8);
-      if (V.spE) sprSync(V.spE, V.mesh, g.x, g.z, w, g.state === 'alert', false);
+      if (V.spE) sprSync(V.spE, V.mesh, g.x, g.z, w, g.state === 'alert', false, S);
       if (V.cone.visible) updateCone(V, g, S);
       const st = g.state === 'alert' ? 'alert' : (g.state === 'sus' || g.state === 'search') ? (g.type === 'cat' ? 'cat' : 'sus') : '';
       if (st !== V.state) { V.state = st; if (st) V.icon.material.map = ICONS[st]; V.icon.material.needsUpdate = true; }
