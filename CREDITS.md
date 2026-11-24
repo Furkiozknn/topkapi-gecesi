@@ -15,3 +15,4 @@ flood fill) and saved as webp. In game they are camera-facing sprites over the u
 | `ic-oglan-egil.webp` | the page crouching (player sprite while crouched) | Gemini (Nano Banana), sheet 2 |
 | `kedi.webp` | palace cat (guard sprite, pause card) | Gemini (Nano Banana), sheet 2 |
 | `papagan.webp` | the song's parrot on its perch (title and end cards) | Gemini (Nano Banana), sheet 2 |
+| `yeniceri.webp` | Janissary guard with musket, navy kaftan (own sprite for the Yenicheri role, 24.11 polish) | Gemini (Nano Banana), single character on white, style reference: sheet 1 |
