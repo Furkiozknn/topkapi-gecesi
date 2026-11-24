@@ -1038,7 +1038,11 @@ input[type=range] {
 
 /* Palace map */
 .mapwrap { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
-@media (max-width: 780px) { .mapwrap { grid-template-columns: 1fr; } }
+@media (max-width: 780px) {
+  .mapwrap { grid-template-columns: 1fr; }
+  /* phone: the Start / Main menu buttons stay inside the screen while the map and briefing scroll under them */
+  #mapscr .brief .col { position: sticky; bottom: -18px; z-index: 2; margin: 0 -8px; padding: 12px 8px 18px; background: linear-gradient(180deg, rgba(8, 16, 36, 0), rgba(8, 16, 36, 0.94) 26%); }
+}
 .pmap {
   position: relative;
   border-radius: 6px;
@@ -1902,6 +1906,45 @@ input[type=range] {
   };
 })(typeof window !== 'undefined' ? window : globalThis);
 /*ARENA-KIT:END*/</script>
+<script>
+/* GL-GUARD: WebGL unavailable / three.js CDN unreachable -> clear TR+EN message instead of a stuck loading screen */
+(function () {
+  var T = {
+    gl: ['WebGL kullanılamıyor. Tarayıcında donanım hızlandırmayı aç ya da başka bir tarayıcı dene.', 'WebGL is unavailable. Enable hardware acceleration in your browser or try another browser.'],
+    net: ['Three.js yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.', 'Three.js could not be loaded. Check your connection and reload the page.']
+  };
+  var st = document.createElement('style');
+  st.textContent = '.glfail{margin:10px 0;padding:10px 12px;border-radius:12px;border:1px solid rgba(214,84,60,.65);background:rgba(214,84,60,.16);color:inherit;font-size:13px;line-height:1.4;text-align:left}.glfail p{margin:0 0 4px}.glfail p+p{margin:0;font-size:12px;opacity:.82}.glfail-fixed{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;width:min(92vw,420px);background:#2a1410;color:#f7e9e2;box-shadow:0 8px 30px rgba(0,0,0,.5)}';
+  document.head.appendChild(st);
+  var box = null, kind = '';
+  function show(k) {
+    if (kind === 'gl' && k !== 'gl') return;
+    kind = k; if (k === 'gl') window.__glFailed = true;
+    var pb = document.querySelector('#b-play'); if (pb) pb.disabled = true;
+    var tr = /^tr/i.test(navigator.language || ''), m = T[k];
+    if (!box) {
+      box = document.createElement('div'); box.className = 'glfail'; box.setAttribute('role', 'alert');
+      var host = document.querySelector('#loadmsg');
+      if (host && host.getClientRects().length) { if (host.childElementCount) host.parentNode.insertBefore(box, host); else { host.textContent = ''; host.parentNode.insertBefore(box, host.nextSibling); } }
+      else { box.className += ' glfail-fixed'; document.body.appendChild(box); }
+    }
+    box.textContent = '';
+    [tr ? m[0] : m[1], tr ? m[1] : m[0]].forEach(function (s) { var p = document.createElement('p'); p.textContent = s; box.appendChild(p); });
+  }
+  window.__glFatal = show;
+  window.__glClear = function () { if (box && kind === 'net') { box.remove(); box = null; kind = ''; } };
+  // inert stand-in for the renderer when WebGL cannot start, so the menu code below still runs
+  window.__glStub = function (canvas) {
+    var p = new Proxy(function () {}, {
+      get: function (t, k) { return k === 'domElement' ? canvas : k === Symbol.toPrimitive ? function () { return 0; } : k === 'then' ? undefined : p; },
+      set: function () { return true; }, apply: function () { return p; }, construct: function () { return p; }
+    });
+    return p;
+  };
+  setTimeout(function () { if (!window.__three) show('net'); }, 15000);
+})();
+</script>
+
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"},"integrity":{"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js":"sha384-GY5FqjttLCFRt/McQbyaVdCk2O1IQtOeX8Py6NfD89BIAsIyJFRl4UgSXrk2vXAk"}}
 </script>
@@ -3645,8 +3688,9 @@ return { CELL, DT, TILE, GT, GUARD_TYPES, MISSIONS, NOISE, stepNoise, hears, dam
 })();
 if (typeof module !== 'undefined') module.exports = CORE;
 </script>
-<script type="module">
+<script type="module" onerror="window.__glFatal&&__glFatal('net')">
 import * as THREE from 'three';
+window.__three = true; if (window.__glClear) window.__glClear();
 
 const C = CORE;
 window.MISSIONS = C.MISSIONS;
@@ -3879,7 +3923,9 @@ function missionGuardDesc(D) {
 // Renderer, scene, sky, lights
 // ---------------------------------------------------------------------------
 const canvas = $('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+let glFail = false, renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' }); }
+catch (e) { glFail = true; renderer = window.__glStub(canvas); window.__glFatal('gl'); }
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, SET.quality === 'low' ? 1 : 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
@@ -3893,7 +3939,7 @@ const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.3, 30
 scene.fog = new THREE.Fog(0x18264a, 70, 950);
 // arena-core v2 render preset: neutral tone mapping, moonlit room light, CSS vignette + grain, grade. No composer: with the
 // bloom composer the whole frame came out black on Intel UHD (an unbounded value from the custom shaders spreads through the blur).
-const FX = window.ArenaCore ? ArenaCore.render.setup(renderer, scene, camera, { tonlama: 'neutral', pozlama: 1.06, ortam: 0.1, bloom: { guc: 0.4, esik: 0.8, yaricap: 0.45 }, vinyet: 0.3, grain: 0.04, renk: { doygunluk: 1.08, kontrast: 1.06 } }) : null;
+const FX = window.ArenaCore && !glFail ? ArenaCore.render.setup(renderer, scene, camera, { tonlama: 'neutral', pozlama: 1.06, ortam: 0.1, bloom: { guc: 0.4, esik: 0.8, yaricap: 0.45 }, vinyet: 0.3, grain: 0.04, renk: { doygunluk: 1.08, kontrast: 1.06 } }) : null;
 const col = h => new THREE.Color(h);
 
 // Moonlit noir palette: night blue #0B1D3A, moonlight #9DB4FF, lantern #FFB547, gold #C9A227, cini white and cobalt
@@ -5476,7 +5522,7 @@ function setTitleScene() {
   if (!WORLD.level || WORLD.level.idx !== 2) buildLevel(S.L);
   resetDynamic(S); applySky('night', 0);
 }
-function openMap(sel) {
+function openMap(sel) { if (glFail) return;
   G.daily = null; hideAll(); G.screen = 'map'; G.paused = false;
   if (sel != null) G.sel = sel;
   else G.sel = (PROG.tutDone || (PROG.done && PROG.done.some(Boolean))) ? Math.min(NM - 1, PROG.done.filter(Boolean).length) : -1;
@@ -5564,7 +5610,7 @@ function buildMap() {
   $('b-start').addEventListener('click', () => { audioInit(); SFX.click(); startMission(G.sel); });
   $('b-mback').addEventListener('click', () => { SFX.click(); toTitle(); });
 }
-function startMission(i) {
+function startMission(i) { if (glFail) return;
   hideAll(); G.idx = i; G.sel = i; if (!G.daily && i >= 0) { PROG.last = i; saveProg(); }
   G.tutStep = i === -1 ? 1 : 0; G.tutCrouchT = 0;
   const S = C.newSim(i); G.S = S;
@@ -5687,7 +5733,7 @@ function fillResult() {
 const ARENA_URL = 'https://furkiozknn.github.io/topkapi-gecesi/';
 const dayText = d => String(d).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
 function dailyInfo() { const d = Arena.daily(); d.mission = d.seed % NM; return d; }
-function startDaily() {
+function startDaily() { if (glFail) return;
   if (!window.Arena) return;
   const d = dailyInfo(); G.daily = d; startMission(d.mission);
   toast(t('dailyIntro', { d: dayText(d.day), m: (d.mission + 1) + '. ' + mName(d.mission) }), 'info', 3600);
@@ -6080,14 +6126,14 @@ if (SET.quality === 'low') setQuality('low');
 applyTexts(); auVolumes();
 hideAll(); show('title', true);
 function ready() {
-  if (G.ready) return; G.ready = true; $('loadmsg').textContent = ''; $('b-play').disabled = false; $('b-daily').disabled = false;
+  if (G.ready || glFail) return; G.ready = true; $('loadmsg').textContent = ''; $('b-play').disabled = false; $('b-daily').disabled = false;
   if (FLAG.mission === 0 && !FLAG.auto) startMission(-1);
   else if (FLAG.mission >= 1 && FLAG.mission <= NM && !FLAG.auto) startMission(FLAG.mission - 1);
   else if (FLAG.screen === 'map') openMap(); else if (FLAG.screen === 'end') openEnd();
   if (FLAG.sim > 0) window.topkapiSim(FLAG.sim);
   if (!FLAG.auto && G.screen === 'title') $('b-play').focus();
 }
-$('loadmsg').textContent = t('loading', { n: 1, m: 2 });
+if (!glFail) $('loadmsg').textContent = t('loading', { n: 1, m: 2 });
 try { renderer.compileAsync(scene, camera).then(() => { $('loadmsg').textContent = t('loading', { n: 2, m: 2 }); setTimeout(ready, 120); }, ready); } catch (e) { ready(); }
 setTimeout(ready, 6000);
 window.__loaded = true;
